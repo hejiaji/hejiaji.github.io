@@ -563,27 +563,24 @@
             @page { margin: 14mm 12mm; size: A4; }
         }
 
-        /* ── Responsive ── */
-        /* Touch: show tooltip when card has .is-open */
-        .stat-card.is-open {
-            border-color: var(--accent);
-            box-shadow: 0 4px 18px rgba(37,99,235,0.12);
-            transform: translateY(-2px);
-        }
-
-        .stat-card.is-open .stat-tooltip {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
-        }
-
         @media (max-width: 640px) {
             main { grid-template-columns: 1fr; gap: 36px 0; padding: 20px 20px 60px; }
             .sidebar { position: static; }
             .stats { grid-template-columns: repeat(3, 1fr); }
             .stat-tooltip { min-width: 140px; font-size: 0.75rem; }
-            /* Disable CSS hover on touch so only JS tap controls it */
-            .stat-card:hover { transform: none; box-shadow: none; border-color: var(--border); }
-            .stat-card:hover .stat-tooltip { opacity: 0; transform: translateX(-50%) translateY(6px); }
+            /* Disable CSS :hover on touch — JS .is-open handles it instead */
+            .stat-card:hover:not(.is-open) { transform: none; box-shadow: none; border-color: var(--border); }
+            .stat-card:hover:not(.is-open) .stat-tooltip { opacity: 0; transform: translateX(-50%) translateY(6px); }
+            /* .is-open state (JS-controlled) */
+            .stat-card.is-open {
+                border-color: var(--accent);
+                box-shadow: 0 4px 18px rgba(37,99,235,0.12);
+                transform: translateY(-2px);
+            }
+            .stat-card.is-open .stat-tooltip {
+                opacity: 1 !important;
+                transform: translateX(-50%) translateY(0) !important;
+            }
             /* Tap hint */
             .stat-label::after { content: ' ↑'; font-size: 0.6rem; opacity: 0.4; }
         }
@@ -876,18 +873,20 @@
 
     // ── Tap-to-toggle tooltips on touch devices ──
     if (window.matchMedia('(hover: none)').matches) {
+        const closeAll = () => document.querySelectorAll('.stat-card.is-open').forEach(c => c.classList.remove('is-open'));
+
         document.querySelectorAll('.stat-card').forEach(card => {
-            card.addEventListener('click', e => {
+            card.addEventListener('touchend', e => {
+                e.preventDefault(); // prevent ghost click
                 const isOpen = card.classList.contains('is-open');
-                // Close all others first
-                document.querySelectorAll('.stat-card.is-open').forEach(c => c.classList.remove('is-open'));
+                closeAll();
                 if (!isOpen) card.classList.add('is-open');
-                e.stopPropagation();
-            });
+            }, { passive: false });
         });
+
         // Tap anywhere else to close
-        document.addEventListener('click', () => {
-            document.querySelectorAll('.stat-card.is-open').forEach(c => c.classList.remove('is-open'));
+        document.addEventListener('touchend', e => {
+            if (!e.target.closest('.stat-card')) closeAll();
         });
     }
 
