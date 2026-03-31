@@ -597,11 +597,11 @@
         Back
     </a>
     <div class="ctrl-btns">
-        <button class="ctrl-btn" onclick="window.print()">
+        <button class="ctrl-btn" id="saveBtn" onclick="handleSave()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
             </svg>
-            Print / Save PDF
+            <span id="saveBtnLabel">Save PDF</span>
         </button>
         <button class="ctrl-btn" onclick="toggleTheme()">
             <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -823,6 +823,31 @@
         localStorage.setItem('theme', t);
     }
     function toggleTheme() { applyTheme(root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'); }
+
+    // ── Save PDF: print on desktop, Web Share API on mobile ──
+    const isTouchDevice = window.matchMedia('(hover: none)').matches;
+    if (isTouchDevice) {
+        document.getElementById('saveBtnLabel').textContent = 'Share';
+        document.querySelector('#saveBtn svg').innerHTML = '<path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>';
+    }
+
+    function handleSave() {
+        if (!isTouchDevice) {
+            window.print();
+            return;
+        }
+        // Mobile: try Web Share API, fall back to opening print dialog
+        if (navigator.share) {
+            navigator.share({
+                title: 'Jeremy He — Resume',
+                text: 'Check out my resume',
+                url: window.location.href,
+            }).catch(() => {});
+        } else {
+            // Fallback: still try print (works on some mobile browsers)
+            window.print();
+        }
+    }
 
     // Count-up animation for all stats
     function countUp(el, target, duration) {
