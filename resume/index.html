@@ -216,13 +216,22 @@
             margin-bottom: 24px;
         }
 
+        /* ── Stat card + tooltip ── */
         .stat-card {
+            position: relative;
             background: var(--card-bg);
             border: 1px solid var(--border);
             border-radius: 10px;
             padding: 10px 12px;
             text-align: center;
-            transition: background 0.3s, border-color 0.3s;
+            cursor: default;
+            transition: background 0.3s, border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+        }
+
+        .stat-card:hover {
+            border-color: var(--accent);
+            box-shadow: 0 4px 18px rgba(37,99,235,0.12);
+            transform: translateY(-2px);
         }
 
         .stat-card .stat-num {
@@ -238,6 +247,70 @@
             color: var(--muted);
             margin-top: 2px;
             line-height: 1.3;
+        }
+
+        /* Tooltip popover */
+        .stat-tooltip {
+            position: absolute;
+            bottom: calc(100% + 10px);
+            left: 50%;
+            transform: translateX(-50%) translateY(6px);
+            background: var(--text);
+            color: var(--bg);
+            border-radius: 10px;
+            padding: 10px 14px;
+            min-width: 160px;
+            max-width: 210px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            z-index: 100;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+            white-space: nowrap;
+        }
+
+        /* Arrow */
+        .stat-tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 6px solid transparent;
+            border-top-color: var(--text);
+            border-bottom: none;
+        }
+
+        .stat-card:hover .stat-tooltip {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .stat-tooltip-title {
+            font-size: 0.6rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            opacity: 0.55;
+            margin-bottom: 6px;
+        }
+
+        .stat-tooltip-list {
+            list-style: none;
+        }
+
+        .stat-tooltip-list li {
+            font-size: 0.8rem;
+            font-weight: 500;
+            padding: 3px 0;
+            border-bottom: 1px solid rgba(128,128,128,0.2);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .stat-tooltip-list li:last-child {
+            border-bottom: none;
         }
 
         /* Sidebar sections */
@@ -491,10 +564,28 @@
         }
 
         /* ── Responsive ── */
+        /* Touch: show tooltip when card has .is-open */
+        .stat-card.is-open {
+            border-color: var(--accent);
+            box-shadow: 0 4px 18px rgba(37,99,235,0.12);
+            transform: translateY(-2px);
+        }
+
+        .stat-card.is-open .stat-tooltip {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
         @media (max-width: 640px) {
             main { grid-template-columns: 1fr; gap: 36px 0; padding: 20px 20px 60px; }
             .sidebar { position: static; }
-            .stats { grid-template-columns: repeat(4, 1fr); }
+            .stats { grid-template-columns: repeat(3, 1fr); }
+            .stat-tooltip { min-width: 140px; font-size: 0.75rem; }
+            /* Disable CSS hover on touch so only JS tap controls it */
+            .stat-card:hover { transform: none; box-shadow: none; border-color: var(--border); }
+            .stat-card:hover .stat-tooltip { opacity: 0; transform: translateX(-50%) translateY(6px); }
+            /* Tap hint */
+            .stat-label::after { content: ' ↑'; font-size: 0.6rem; opacity: 0.4; }
         }
     </style>
 </head>
@@ -538,9 +629,52 @@
         <div class="location-label">Sydney, Australia</div>
 
         <div class="stats">
-            <div class="stat-card"><div class="stat-num" id="yoe">0</div><div class="stat-label">Years of exp.</div></div>
-            <div class="stat-card"><div class="stat-num" data-count="5">0</div><div class="stat-label">Companies</div></div>
-            <div class="stat-card"><div class="stat-num" data-count="2">0</div><div class="stat-label">Countries</div></div>
+
+            <!-- Years of exp -->
+            <div class="stat-card">
+                <div class="stat-num" id="yoe">0</div>
+                <div class="stat-label">Years of exp.</div>
+                <div class="stat-tooltip">
+                    <div class="stat-tooltip-title">Career timeline</div>
+                    <ul class="stat-tooltip-list">
+                        <li>🏢 Pactera · 2012</li>
+                        <li>🏢 Nagarro · 2014</li>
+                        <li>🔷 ThoughtWorks · 2016</li>
+                        <li>🛡️ SafetyCulture · 2018</li>
+                        <li>🟠 Atlassian · 2021</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Companies -->
+            <div class="stat-card">
+                <div class="stat-num" data-count="5">0</div>
+                <div class="stat-label">Companies</div>
+                <div class="stat-tooltip">
+                    <div class="stat-tooltip-title">Where I've worked</div>
+                    <ul class="stat-tooltip-list">
+                        <li>🟠 Atlassian</li>
+                        <li>🛡️ SafetyCulture</li>
+                        <li>🔷 ThoughtWorks</li>
+                        <li>🏢 Nagarro Objectiva</li>
+                        <li>🏢 Pactera</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Countries -->
+            <div class="stat-card">
+                <div class="stat-num" data-count="2">0</div>
+                <div class="stat-label">Countries</div>
+                <div class="stat-tooltip">
+                    <div class="stat-tooltip-title">Lived in</div>
+                    <ul class="stat-tooltip-list">
+                        <li>🇨🇳 China · Born &amp; raised</li>
+                        <li>🇦🇺 Australia · Since 2018</li>
+                    </ul>
+                </div>
+            </div>
+
         </div>
 
         <div class="s-section">
@@ -714,6 +848,23 @@
         entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
     }, { threshold: 0.1 });
     document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+    // ── Tap-to-toggle tooltips on touch devices ──
+    if (window.matchMedia('(hover: none)').matches) {
+        document.querySelectorAll('.stat-card').forEach(card => {
+            card.addEventListener('click', e => {
+                const isOpen = card.classList.contains('is-open');
+                // Close all others first
+                document.querySelectorAll('.stat-card.is-open').forEach(c => c.classList.remove('is-open'));
+                if (!isOpen) card.classList.add('is-open');
+                e.stopPropagation();
+            });
+        });
+        // Tap anywhere else to close
+        document.addEventListener('click', () => {
+            document.querySelectorAll('.stat-card.is-open').forEach(c => c.classList.remove('is-open'));
+        });
+    }
 
     // Skill bars animate on scroll
     const barObserver = new IntersectionObserver((entries) => {
