@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Jeremy He — Resume">
+    <link rel="shortcut icon" href="/img/favicon.ico">
+    <title>Resume — Jeremy He</title>
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #f9f9f7;
+            --text: #1a1a1a;
+            --muted: #888;
+            --accent: #2563eb;
+            --border: #e5e5e5;
+            --card-bg: #fff;
+            --toggle-bg: #e5e5e5;
+            --toggle-text: #555;
+        }
+
+        :root[data-theme="dark"] {
+            --bg: #111110;
+            --text: #e8e8e6;
+            --muted: #666;
+            --accent: #60a5fa;
+            --border: #2a2a28;
+            --card-bg: #1c1c1a;
+            --toggle-bg: #2a2a28;
+            --toggle-text: #999;
+        }
+
+        html { font-size: 16px; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        /* ── Controls ── */
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 780px;
+            margin: 0 auto;
+            padding: 14px 24px 0;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.82rem;
+            font-weight: 500;
+            color: var(--muted);
+            text-decoration: none;
+            transition: color 0.15s;
+        }
+        .back-link:hover { color: var(--accent); }
+        .back-link svg { width: 14px; height: 14px; }
+
+        .ctrl-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: var(--toggle-bg);
+            color: var(--toggle-text);
+            border: none;
+            border-radius: 6px;
+            padding: 5px 11px;
+            font-size: 0.78rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+            font-family: inherit;
+        }
+        .ctrl-btn:hover { color: var(--text); }
+        .ctrl-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+        /* ── Layout ── */
+        main {
+            max-width: 780px;
+            margin: 0 auto;
+            padding: 36px 24px 60px;
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            gap: 0 48px;
+        }
+
+        /* ── Left sidebar ── */
+        .sidebar { }
+
+        .avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            display: block;
+            margin-bottom: 16px;
+        }
+
+        .name {
+            font-size: 1.3rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+            margin-bottom: 4px;
+        }
+
+        .title-label {
+            font-size: 0.82rem;
+            color: var(--muted);
+            margin-bottom: 24px;
+        }
+
+        /* sidebar sections */
+        .s-section {
+            margin-bottom: 24px;
+        }
+
+        .s-section h3 {
+            font-size: 0.65rem;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 10px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .s-section ul {
+            list-style: none;
+            font-size: 0.85rem;
+        }
+
+        .s-section ul li {
+            padding: 3px 0;
+            color: var(--text);
+        }
+
+        .s-section a {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 0;
+            transition: color 0.15s;
+        }
+        .s-section a:hover { color: var(--accent); }
+        .s-section a svg { width: 13px; height: 13px; flex-shrink: 0; }
+
+        /* skill tags */
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .tag {
+            font-size: 0.75rem;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            padding: 2px 8px;
+            color: var(--text);
+            transition: background 0.2s;
+        }
+
+        /* ── Right content ── */
+        .content { }
+
+        /* content section */
+        .c-section {
+            margin-bottom: 32px;
+        }
+
+        .c-section h2 {
+            font-size: 0.65rem;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 14px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        /* summary */
+        .summary {
+            font-size: 0.93rem;
+            color: var(--text);
+            line-height: 1.75;
+        }
+
+        /* job */
+        .job {
+            margin-bottom: 22px;
+        }
+
+        .job:last-child { margin-bottom: 0; }
+
+        .job-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-bottom: 2px;
+        }
+
+        .job-company {
+            font-weight: 700;
+            font-size: 0.97rem;
+        }
+
+        .job-period {
+            font-size: 0.78rem;
+            color: var(--muted);
+            white-space: nowrap;
+        }
+
+        .job-role {
+            font-size: 0.85rem;
+            color: var(--accent);
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .job ul {
+            list-style: none;
+            font-size: 0.88rem;
+            padding-left: 0;
+        }
+
+        .job ul li {
+            position: relative;
+            padding-left: 14px;
+            margin-bottom: 5px;
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .job ul li::before {
+            content: "–";
+            position: absolute;
+            left: 0;
+            color: var(--muted);
+        }
+
+        /* ── Print ── */
+        @media print {
+            .controls { display: none; }
+            body { background: #fff; color: #000; font-size: 13px; }
+            :root { --bg: #fff; --text: #000; --muted: #555; --border: #ddd; --accent: #1a56db; --card-bg: #fff; }
+            main { padding-top: 12px; gap: 0 32px; }
+            .job { margin-bottom: 14px; page-break-inside: avoid; break-inside: avoid; }
+            .job ul li { page-break-inside: avoid; break-inside: avoid; }
+            .c-section { margin-bottom: 20px; }
+            .c-section h2 { page-break-after: avoid; break-after: avoid; }
+            .s-section { margin-bottom: 16px; page-break-inside: avoid; break-inside: avoid; }
+            .job-header { page-break-after: avoid; break-after: avoid; }
+            .job-role { page-break-after: avoid; break-after: avoid; }
+            .summary { page-break-inside: avoid; break-inside: avoid; }
+            .tag { border-color: #ccc; font-size: 0.7rem; }
+            a { color: inherit !important; text-decoration: none; }
+            @page { margin: 16mm 14mm; size: A4; }
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 600px) {
+            main {
+                grid-template-columns: 1fr;
+                gap: 32px 0;
+                padding: 24px 20px 48px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Controls -->
+<div class="controls">
+    <a href="/" class="back-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"/>
+        </svg>
+        Back
+    </a>
+    <div style="display:flex;gap:8px;">
+        <button class="ctrl-btn" onclick="window.print()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+                <rect x="6" y="14" width="12" height="8"/>
+            </svg>
+            Print / Save PDF
+        </button>
+        <button class="ctrl-btn" onclick="toggleTheme()">
+            <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>
+            <span id="themeLabel">Dark</span>
+        </button>
+    </div>
+</div>
+
+<main>
+
+    <!-- ── Sidebar ── -->
+    <aside class="sidebar">
+
+        <img src="/img/avatar.jpg" alt="Jeremy He" class="avatar">
+        <div class="name">Jeremy He</div>
+        <div class="title-label">Senior Software Engineer</div>
+
+        <!-- Contact -->
+        <div class="s-section">
+            <h3>Contact</h3>
+            <a href="mailto:hejiaji16888@gmail.com">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="4" width="20" height="16" rx="2"/>
+                    <polyline points="2,4 12,13 22,4"/>
+                </svg>
+                hejiaji16888@gmail.com
+            </a>
+            <a href="https://hejiaji.cn" target="_blank" rel="noopener">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
+                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                </svg>
+                hejiaji.cn
+            </a>
+            <a href="https://github.com/hejiaji" target="_blank" rel="noopener">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.009-.868-.013-1.703-2.782.605-3.369-1.34-3.369-1.34-.454-1.154-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0 1 12 6.836a9.59 9.59 0 0 1 2.504.337c1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.202 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/>
+                </svg>
+                github.com/hejiaji
+            </a>
+            <a href="https://www.linkedin.com/in/hejiaji/" target="_blank" rel="noopener">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20.447 20.452H17.19v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.945V9h3.13v1.561h.046c.435-.824 1.497-1.694 3.082-1.694 3.296 0 3.904 2.17 3.904 4.994v6.591zM5.337 7.433a1.817 1.817 0 1 1 0-3.633 1.817 1.817 0 0 1 0 3.633zM6.969 20.452H3.7V9h3.27v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                </svg>
+                linkedin.com/in/hejiaji
+            </a>
+        </div>
+
+        <!-- Skills -->
+        <div class="s-section">
+            <h3>Frontend</h3>
+            <div class="tags">
+                <span class="tag">React</span>
+                <span class="tag">React Native</span>
+                <span class="tag">TypeScript</span>
+                <span class="tag">AngularJS</span>
+                <span class="tag">SSR</span>
+            </div>
+        </div>
+
+        <div class="s-section">
+            <h3>Backend</h3>
+            <div class="tags">
+                <span class="tag">Golang</span>
+                <span class="tag">Java</span>
+                <span class="tag">C#</span>
+                <span class="tag">Python</span>
+                <span class="tag">gRPC</span>
+                <span class="tag">Spring Boot</span>
+            </div>
+        </div>
+
+        <div class="s-section">
+            <h3>AI &amp; Data</h3>
+            <div class="tags">
+                <span class="tag">LLM</span>
+                <span class="tag">AI Agents</span>
+            </div>
+        </div>
+
+        <div class="s-section">
+            <h3>Infrastructure</h3>
+            <div class="tags">
+                <span class="tag">Kubernetes</span>
+                <span class="tag">AWS</span>
+                <span class="tag">Docker</span>
+            </div>
+        </div>
+
+        <div class="s-section">
+            <h3>Practices</h3>
+            <div class="tags">
+                <span class="tag">Agile</span>
+                <span class="tag">TDD</span>
+                <span class="tag">Event Sourcing</span>
+                <span class="tag">Microservices</span>
+                <span class="tag">CI/CD</span>
+                <span class="tag">SLO/SLA</span>
+            </div>
+        </div>
+
+        <!-- Location -->
+        <div class="s-section">
+            <h3>Location</h3>
+            <ul>
+                <li>Sydney, Australia 🇦🇺</li>
+            </ul>
+        </div>
+
+    </aside>
+
+    <!-- ── Main content ── -->
+    <div class="content">
+
+        <!-- Summary -->
+        <div class="c-section">
+            <h2>Summary</h2>
+            <p class="summary">
+                Polyglot engineer with a passion for technology, user experience, and testing.
+                Experienced across the full stack — from building robust backend services with Golang,
+                Java, and C# to crafting modern frontend experiences with React and TypeScript.
+                Works actively, professionally, and collaboratively in agile teams.
+            </p>
+        </div>
+
+        <!-- Experience -->
+        <div class="c-section">
+            <h2>Experience</h2>
+
+            <!-- Atlassian -->
+            <div class="job">
+                <div class="job-header">
+                    <span class="job-company">Atlassian</span>
+                    <span class="job-period">Nov 2021 — Present · Sydney</span>
+                </div>
+                <div class="job-role">Senior Software Engineer</div>
+                <ul>
+                    <li>Develop and support the storage &amp; media processing platform powering uploads and attachments across all major Atlassian products</li>
+                    <li>Define, plan, and continuously improve reliability and performance SLOs for the platform</li>
+                    <li>Led a petabyte-scale data migration to a new platform with zero data loss and minimal disruption</li>
+                    <li>Pioneered the team's migration from AWS EC2 to Kubernetes — the first mega-team in the organisation to do so</li>
+                    <li>Drive system design and technical direction across multiple high-impact projects</li>
+                </ul>
+            </div>
+
+            <!-- SafetyCulture -->
+            <div class="job">
+                <div class="job-header">
+                    <span class="job-company">SafetyCulture</span>
+                    <span class="job-period">Jul 2018 — Nov 2021 · Sydney</span>
+                </div>
+                <div class="job-role">Senior Software Engineer</div>
+                <ul>
+                    <li>Designed and built multiple core services in Golang with gRPC &amp; Event Sourcing architecture</li>
+                    <li>Led the project that redesigned and improved the whole architecture for one of the core product features</li>
+                    <li>Worked as a frontend pioneer in the team, proposed and re-implemented a web service with React SSR in TypeScript</li>
+                    <li>Brought agile practices to the team, introduced kick-off &amp; sign-off processes to ensure reliable and consistent daily development delivery</li>
+                </ul>
+            </div>
+
+            <!-- ThoughtWorks -->
+            <div class="job">
+                <div class="job-header">
+                    <span class="job-company">ThoughtWorks</span>
+                    <span class="job-period">Jun 2016 — Jul 2018 · Beijing</span>
+                </div>
+                <div class="job-role">Software Engineer</div>
+                <ul>
+                    <li>Built Android apps with React Native &amp; Angular, used by Mercedes-Benz stores across China</li>
+                    <li>Developed backend services with Java Spring Boot 2 Microservices architecture</li>
+                </ul>
+            </div>
+
+            <!-- Nagarro Objectiva -->
+            <div class="job">
+                <div class="job-header">
+                    <span class="job-company">Nagarro Objectiva</span>
+                    <span class="job-period">Oct 2014 — Jun 2016 · Beijing</span>
+                </div>
+                <div class="job-role">Software Engineer</div>
+                <ul>
+                    <li>Worked as a full-stack engineer using AngularJS &amp; TypeScript for frontend, C# for backend</li>
+                    <li>Developed new projects and implemented enhancements with Agile methodology</li>
+                </ul>
+            </div>
+
+            <!-- Pactera -->
+            <div class="job">
+                <div class="job-header">
+                    <span class="job-company">Pactera</span>
+                    <span class="job-period">Aug 2012 — Oct 2014 · Beijing</span>
+                </div>
+                <div class="job-role">Software Engineer</div>
+                <ul>
+                    <li>Designed and developed tools in C# for Geographic Information System (GIS) data validation</li>
+                    <li>Wrote scripts to automate error validation and reduce manual QA effort</li>
+                </ul>
+            </div>
+
+        </div>
+
+    </div>
+
+</main>
+
+<script>
+    // ── Theme (synced with main site via localStorage) ──
+    const root = document.documentElement;
+    const themeLabel = document.getElementById('themeLabel');
+    const themeIcon = document.getElementById('themeIcon');
+
+    const sunIcon = `<path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/><circle cx="12" cy="12" r="5"/>`;
+    const moonIcon = `<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>`;
+
+    const savedTheme = localStorage.getItem('theme') ||
+        (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    applyTheme(savedTheme);
+
+    function applyTheme(theme) {
+        root.setAttribute('data-theme', theme);
+        themeIcon.innerHTML = theme === 'dark' ? sunIcon : moonIcon;
+        themeLabel.textContent = theme === 'dark' ? 'Light' : 'Dark';
+        localStorage.setItem('theme', theme);
+    }
+
+    function toggleTheme() {
+        applyTheme(root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+    }
+</script>
+
+</body>
+</html>
