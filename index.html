@@ -1,670 +1,407 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<!-- Head tag -->
 <head>
     <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="">
-    <meta name="keyword"  content="">
-    <link rel="shortcut icon" href="/img/siteicon.jpg">
-
-    <title>
-        
-          Jeremy&#39;s Blog
-        
-    </title>
-
-    <link rel="canonical" href="http://hejiaji.cn/">
-
-    <!-- Bootstrap Core CSS -->
-    <link rel="stylesheet" href="/css/bootstrap.min.css">
-
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="/css/hux-blog.min.css">
-
-    <!-- Pygments Highlight CSS -->
-    <link rel="stylesheet" href="/css/highlight.css">
-
-    <!-- Custom Fonts -->
-    <!-- <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
-    <!-- Hux change font-awesome CDN to qiniu -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.5.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
-
-
-    <!-- Hux Delete, sad but pending in China
-    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
-    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/
-    css'>
-    -->
-
-
-    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
-    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
-    <!--[if lt IE 9]>
-        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
-        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
-    <![endif]-->
-
-    <!-- ga & ba script hoook -->
-    <script></script>
-</head>
-
-
-<!-- hack iOS CSS :active style -->
-<body ontouchstart="">
-
-    <!-- Navigation -->
-<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
-    <div class="container-fluid">
-        <!-- Brand and toggle get grouped for better mobile display -->
-        <div class="navbar-header page-scroll">
-            <button type="button" class="navbar-toggle">
-                <span class="sr-only">Toggle navigation</span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-            </button>
-            <a class="navbar-brand" href="/">Jeremy He&#39;s Blog</a>
-        </div>
-
-        <!-- Collect the nav links, forms, and other content for toggling -->
-        <!-- Known Issue, found by Hux:
-            <nav>'s height woule be hold on by its content.
-            so, when navbar scale out, the <nav> will cover tags.
-            also mask any touch event of tags, unfortunately.
-        -->
-        <div id="huxblog_navbar">
-            <div class="navbar-collapse">
-                <ul class="nav navbar-nav navbar-right">
-                    <li>
-                        <a href="/">Home</a>
-                    </li>
-
-                    
-
-                        
-                    
-
-                        
-                        <li>
-                            <a href="/about/">About</a>
-                        </li>
-                        
-                    
-
-                        
-                        <li>
-                            <a href="/archives/">Archives</a>
-                        </li>
-                        
-                    
-
-                        
-                        <li>
-                            <a href="/tags/">Tags</a>
-                        </li>
-                        
-                    
-                    
-                </ul>
-            </div>
-        </div>
-        <!-- /.navbar-collapse -->
-    </div>
-    <!-- /.container -->
-</nav>
-<script>
-    // Drop Bootstarp low-performance Navbar
-    // Use customize navbar with high-quality material design animation
-    // in high-perf jank-free CSS3 implementation
-    var $body   = document.body;
-    var $toggle = document.querySelector('.navbar-toggle');
-    var $navbar = document.querySelector('#huxblog_navbar');
-    var $collapse = document.querySelector('.navbar-collapse');
-
-    $toggle.addEventListener('click', handleMagic)
-    function handleMagic(e){
-        if ($navbar.className.indexOf('in') > 0) {
-        // CLOSE
-            $navbar.className = " ";
-            // wait until animation end.
-            setTimeout(function(){
-                // prevent frequently toggle
-                if($navbar.className.indexOf('in') < 0) {
-                    $collapse.style.height = "0px"
-                }
-            },400)
-        }else{
-        // OPEN
-            $collapse.style.height = "auto"
-            $navbar.className += " in";
+    <meta name="description" content="Jeremy He — Full-stack Developer based in Sydney, Australia.">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <link rel="shortcut icon" href="/img/favicon.ico">
+    <title>Jeremy He</title>
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
-    }
-</script>
 
+        :root {
+            --bg: #f9f9f7;
+            --text: #1a1a1a;
+            --muted: #888;
+            --accent: #2563eb;
+            --border: #e5e5e5;
+            --card-bg: #fff;
+            --toggle-bg: #e5e5e5;
+            --toggle-text: #555;
+        }
 
-    <!-- Main Content -->
-    <!-- Page Header -->
-<header class="intro-header" style="background-image: url('/img/home-bg.jpg')">
-    <div class="container">
-        <div class="row">
-            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 ">
-                <div class="site-heading">
-                    <h1>Jeremy He&#39;s Blog</h1>
-                    <!--<hr class="small">-->
-                    <span class="subheading">Actions speaks louder than words.</span>
-                </div>
-            </div>
-        </div>
-    </div>
-</header>
+        :root[data-theme="dark"] {
+            --bg: #111110;
+            --text: #e8e8e6;
+            --muted: #666;
+            --accent: #60a5fa;
+            --border: #2a2a28;
+            --card-bg: #1c1c1a;
+            --toggle-bg: #2a2a28;
+            --toggle-text: #999;
+        }
 
+        html {
+            font-size: 16px;
+            scroll-behavior: smooth;
+        }
 
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: background 0.2s, color 0.2s;
+        }
 
-<!-- Main Content -->
-<div class="container">
-    <div class="row">
-        
+        /* ── Layout ── */
+        main {
+            flex: 1;
+            max-width: 640px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 48px 24px 32px;
+        }
 
-<!-- USE SIDEBAR -->
-        <!-- Post Container -->
-        <div class="
-                col-lg-8 col-lg-offset-1
-                col-md-8 col-md-offset-1
-                col-sm-12
-                col-xs-12
-                post-container
-            ">
+        /* ── Avatar ── */
+        .avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 16px;
+            display: block;
+            filter: grayscale(10%);
+        }
 
-            <!-- Main Content -->
+        /* ── Name & tagline ── */
+        h1 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 4px;
+        }
 
+        .tagline {
+            color: var(--muted);
+            font-size: 0.9rem;
+            margin-bottom: 28px;
+            font-style: italic;
+        }
 
-<div class="post-preview">
+        /* ── Section ── */
+        section {
+            margin-bottom: 28px;
+        }
 
-    <a href="/2020/07/21/australia-PR-timeline/">
-        <h2 class="post-title">
-            Australia PR timeline
-        </h2>
-        <h3 class="post-subtitle">
-            The trace of us becoming Australia permanent resident
-        </h3>
-        <div class="post-content-preview">
-            
-2020 is a absolute special year in every perspective. So many tragedies across the world happened since the COVID-19, it has changed not only economic of the world, also of how we work, interact a......
-        </div>
-    </a>
-    <p class="post-meta">
-        Posted by Jeremy He on
-        2020-07-21
-    </p>
+        section h2 {
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 10px;
+        }
 
-</div>
-<hr>
+        /* ── Bio list ── */
+        .bio {
+            list-style: none;
+            font-size: 0.93rem;
+        }
 
-<div class="post-preview">
+        .bio li {
+            padding: 4px 0;
+            border-bottom: 1px solid var(--border);
+        }
 
-    <a href="/2018/05/07/open-iterm-in-finder/">
-        <h2 class="post-title">
-            「译」在finder中打开iTerm?
-        </h2>
-        <h3 class="post-subtitle">
-            Open iTerm here
-        </h3>
-        <div class="post-content-preview">
-            
-   本文翻译自原文
+        .bio li:last-child {
+            border-bottom: none;
+        }
 
-作用很多时候我们都想直接从当前finder目录中直接打开iTerm, 你觉得直接右键打开是不是很酷？！如图：
-第一步打开 Automator
-第二步File - New - Service
-顶上的第一个下拉框选择 files or folders, 第二个下拉框选择 Finder.app
-双击或者从左边拖动 Run Shell Script 到右边，然后输入以下代码......
-        </div>
-    </a>
-    <p class="post-meta">
-        Posted by Jeremy He on
-        2018-05-07
-    </p>
+        /* ── Experience / timeline ── */
+        .experience {
+            list-style: none;
+        }
 
-</div>
-<hr>
+        .experience li {
+            display: flex;
+            gap: 16px;
+            padding: 5px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.93rem;
+            align-items: baseline;
+        }
 
-<div class="post-preview">
+        .experience li:last-child {
+            border-bottom: none;
+        }
 
-    <a href="/2018/03/13/ios-push-notification-process/">
-        <h2 class="post-title">
-            IOS-push-notification-process
-        </h2>
-        <h3 class="post-subtitle">
-            
-        </h3>
-        <div class="post-content-preview">
-            How does IOS push notification to individual device?
-...
-        </div>
-    </a>
-    <p class="post-meta">
-        Posted by Jeremy He on
-        2018-03-13
-    </p>
+        .experience .company {
+            font-weight: 600;
+            flex: 0 0 140px;
+        }
 
-</div>
-<hr>
+        .experience .role {
+            color: var(--muted);
+            font-size: 0.88rem;
+        }
 
-<div class="post-preview">
+        /* ── Links ── */
+        .links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
 
-    <a href="/2018/01/11/redux-instruction/">
-        <h2 class="post-title">
-            Redux介绍
-        </h2>
-        <h3 class="post-subtitle">
-            Redux instruction
-        </h3>
-        <div class="post-content-preview">
-            Watching Fullscreen
-scan in mobile!
+        .links a {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text);
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 16px;
+            transition: border-color 0.15s, color 0.15s, box-shadow 0.15s, background 0.2s;
+        }
 
+        .links a:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(37,99,235,0.08);
+        }
 
-Agenda
-Redux instruction
-What is Redux
-Why Redux
-Example
-Redux Action
-Middleware
+        .links a svg {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+        }
 
-...
-        </div>
-    </a>
-    <p class="post-meta">
-        Posted by Jeremy He on
-        2018-01-11
-    </p>
+        /* ── Controls bar ── */
+        .controls {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 8px;
+            max-width: 640px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 14px 24px 0;
+        }
 
-</div>
-<hr>
+        .ctrl-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: var(--toggle-bg);
+            color: var(--toggle-text);
+            border: none;
+            border-radius: 6px;
+            padding: 5px 11px;
+            font-size: 0.78rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+            font-family: inherit;
+            letter-spacing: 0.01em;
+        }
 
-<div class="post-preview">
+        .ctrl-btn:hover {
+            color: var(--text);
+        }
 
-    <a href="/2016/09/27/isVarDead/">
-        <h2 class="post-title">
-            「译」Var变量死了吗?
-        </h2>
-        <h3 class="post-subtitle">
-            Is var Dead? What should I use?
-        </h3>
-        <div class="post-content-preview">
-            
-   本文翻译自WESBOS的一篇文章
+        .ctrl-btn svg {
+            width: 14px;
+            height: 14px;
+            flex-shrink: 0;
+        }
 
-我们应该用什么？我们已经从ES6规范里学习了 let 和 const 关键字 － 它们是做什么的和它们的作用范围。我们还知道了什么时候它们可以或不可以被重新指定(再赋值)，但是还有一个问题：我们到底应该怎么用它们呢？
-现在在社区里这个问题已经是一个热门话题里，因为有些同学倾向于继续用 var, 而有些朋友说:”var以及死了！”.一些人说“用 le......
-        </div>
-    </a>
-    <p class="post-meta">
-        Posted by Jeremy He on
-        2016-09-27
-    </p>
+        /* ── Footer ── */
+        footer {
+            text-align: center;
+            padding: 20px 24px;
+            font-size: 0.8rem;
+            color: var(--muted);
+            border-top: 1px solid var(--border);
+        }
 
-</div>
-<hr>
+        /* ── Responsive ── */
+        @media (max-width: 480px) {
+            main {
+                padding: 32px 20px 32px;
+            }
+            .experience li {
+                flex-direction: column;
+                gap: 2px;
+            }
+            .experience .company {
+                flex: none;
+            }
+        }
+    </style>
+</head>
+<body>
 
-<div class="post-preview">
-
-    <a href="/2016/08/28/display-usages/">
-        <h2 class="post-title">
-            关于CSS display的多种用法
-        </h2>
-        <h3 class="post-subtitle">
-            The display keyword usages summary
-        </h3>
-        <div class="post-content-preview">
-            前言相信很多人对css中display的用法有很多的confuse，特别是block, inline, inline-block，甚至还有CSS3最新的flex。你可能有这个感觉：  
-
-没关系，现在我来帮大家梳理下这几个值的用法和特性
-display: block
-   将元素显示成块级元素  
-
-最典型的block元素就是常见的div了，块级元素有以下特点：
-
-总是在新行开始（一个blo......
-        </div>
-    </a>
-    <p class="post-meta">
-        Posted by Jeremy He on
-        2016-08-28
-    </p>
-
-</div>
-<hr>
-
-<div class="post-preview">
-
-    <a href="/2016/08/19/CSS3-Animation-and-transform/">
-        <h2 class="post-title">
-            CSS3中两种动画表现形式的优劣
-        </h2>
-        <h3 class="post-subtitle">
-            The differences between transition/transform and animation in CSS3
-        </h3>
-        <div class="post-content-preview">
-            前言众所周知，CSS3的其中一个令人兴奋的较大改变便是加入了动画效果，没错！不用JQuery或其他第三方库，单单几行CSS代码，就可以写出一些非常棒的动画页面。目前， 各大浏览器厂商已经逐渐兼容这些CSS3语法，所以使用它你不用过多考虑兼容性问题。
-CSS3动画相关的几个属性：transition transform animation; 中文翻译过来是过渡，转化和动画。
-transform......
-        </div>
-    </a>
-    <p class="post-meta">
-        Posted by Jeremy He on
-        2016-08-19
-    </p>
-
-</div>
-<hr>
-
-<div class="post-preview">
-
-    <a href="/2016/08/18/hello/">
-        <h2 class="post-title">
-            The very first blog
-        </h2>
-        <h3 class="post-subtitle">
-            
-        </h3>
-        <div class="post-content-preview">
-            Hello!welcome to my personal blog site, thanks for your attention and if you’d like to say anything to me, please find me in Weibo／Facebook／or email me.
-I will post more technique or non-technique ......
-        </div>
-    </a>
-    <p class="post-meta">
-        Posted by Jeremy He on
-        2016-08-18
-    </p>
-
-</div>
-<hr>
-
-
-
-<!-- Pager -->
-
-<ul class="pager">
-    
-    
-</ul>
-
-
-            <!-- 如果开启评论功能 -->
-            
-        </div>
-    <!-- Sidebar Container -->
-            <div class="
-                col-lg-3 col-lg-offset-0
-                col-md-3 col-md-offset-0
-                col-sm-12
-                col-xs-12
-                sidebar-container
-            ">
-                <!-- Featured Tags -->
-                
-                <section>
-                    <!-- no hr -->
-                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
-                    <div class="tags">
-                        
-                            
-                            <a href="/tags/#CSS3" title="CSS3" rel="2">CSS3</a>
-                            
-                        
-                            
-                            <a href="/tags/#react-native" title="react-native" rel="1">react-native</a>
-                            
-                        
-                            
-                            <a href="/tags/#译" title="译" rel="2">译</a>
-                            
-                        
-                            
-                            <a href="/tags/#life" title="life" rel="1">life</a>
-                            
-                        
-                            
-                            <a href="/tags/#Presentation" title="Presentation" rel="1">Presentation</a>
-                            
-                        
-                    </div>
-                </section>
-                
-
-                <!-- Short About -->
-                <section class="visible-md visible-lg">
-                    <hr><h5><a href="/about/">ABOUT ME</a></h5>
-                    <div class="short-about">
-
-                        
-                            <img src="/img/avatar.jpg" />
-                        
-
-                        
-                            <p>热爱的东西就要一直热爱下去!</p>
-                        
-
-                        <!-- SNS Link -->
-                        <ul class="list-inline">
-                            
-                            
-                            
-
-                            
-                                <li>
-                                    <a target="_blank" href="https://hejiaji.cn/resume/">
-                                        <span class="fa-stack fa-lg">
-                                            <i class="fa fa-circle fa-stack-2x"></i>
-                                            <i class="fa fa-user fa-stack-1x fa-inverse"></i>
-                                        </span>
-                                    </a>
-                                </li>
-                            
-
-                            
-                                <li>
-                                    <a target="_blank" href="https://www.facebook.com/100004249878606">
-                                        <span class="fa-stack fa-lg">
-                                            <i class="fa fa-circle fa-stack-2x"></i>
-                                            <i class="fa fa-facebook fa-stack-1x fa-inverse"></i>
-                                        </span>
-                                    </a>
-                                </li>
-                            
-
-                            
-                                <li>
-                                    <a target="_blank"  href="https://github.com/hejiaji">
-                                        <span class="fa-stack fa-lg">
-                                            <i class="fa fa-circle fa-stack-2x"></i>
-                                            <i class="fa fa-github fa-stack-1x fa-inverse"></i>
-                                        </span>
-                                    </a>
-                                </li>
-                            
-                            
-                            
-                            
-                                <li>
-                                    <a target="_blank"  href="https://www.linkedin.com/in/jeremy-he-a5809611a">
-                                        <span class="fa-stack fa-lg">
-                                            <i class="fa fa-circle fa-stack-2x"></i>
-                                            <i class="fa fa-linkedin fa-stack-1x fa-inverse"></i>
-                                        </span>
-                                    </a>
-                                </li>
-                            
-                        </ul>
-                    </div>
-                </section>
-                
-                <!-- Friends Blog -->
-                
-                <hr>
-                <h5>FRIENDS</h5>
-                <ul class="list-inline">
-
-                    
-                        <li><a href="http://www.alyssaxie.com/" target="_blank">Alyssa Xie</a></li>
-                    
-                        <li><a href="https://gold.xitu.io/" target="_blank">Gold-miner</a></li>
-                    
-                </ul>
-                
-            </div>
-        
-    </div>
+<!-- Controls -->
+<div class="controls">
+    <button class="ctrl-btn" id="langBtn" onclick="toggleLang()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+        </svg>
+        <span id="langLabel">中文</span>
+    </button>
+    <button class="ctrl-btn" id="themeBtn" onclick="toggleTheme()">
+        <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+        <span id="themeLabel">Dark</span>
+    </button>
 </div>
 
+<main>
 
-    <!-- Footer -->
-    <!-- Footer -->
+    <img src="/img/avatar.jpg" alt="Jeremy He" class="avatar">
+
+    <h1>Jeremy He</h1>
+    <p class="tagline" data-en="Actions speak louder than words." data-zh="行动胜于言辞。">Actions speak louder than words.</p>
+
+    <!-- About -->
+    <section>
+        <h2 data-en="About" data-zh="关于我">About</h2>
+        <ul class="bio">
+            <li data-en="Full-stack developer" data-zh="全栈开发工程师">Full-stack developer</li>
+            <li data-en="Born in the 90s &nbsp;·&nbsp; Based in Sydney, Australia 🇦🇺" data-zh="90后 &nbsp;·&nbsp; 现居澳大利亚悉尼 🇦🇺">Born in the 90s &nbsp;·&nbsp; Based in Sydney, Australia 🇦🇺</li>
+            <li data-en="Into movies, sports, music &amp; travel" data-zh="喜欢电影、运动、音乐和旅行">Into movies, sports, music &amp; travel</li>
+        </ul>
+    </section>
+
+    <!-- Experience -->
+    <section>
+        <h2 data-en="Experience" data-zh="工作经历">Experience</h2>
+        <ul class="experience">
+            <li>
+                <span class="company">
+                    <a href="https://www.atlassian.com/" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">Atlassian</a>
+                </span>
+                <span class="role" data-en="Senior Engineer &nbsp;·&nbsp; Current" data-zh="高级工程师 &nbsp;·&nbsp; 在职">Senior Engineer &nbsp;·&nbsp; Current</span>
+            </li>
+            <li>
+                <span class="company">
+                    <a href="https://safetyculture.com/" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">SafetyCulture</a>
+                </span>
+                <span class="role" data-en="Senior Engineer" data-zh="高级工程师">Senior Engineer</span>
+            </li>
+            <li>
+                <span class="company">
+                    <a href="https://www.thoughtworks.com/" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">ThoughtWorks</a>
+                </span>
+                <span class="role" data-en="Full-stack Developer" data-zh="全栈开发工程师">Full-stack Developer</span>
+            </li>
+        </ul>
+    </section>
+
+    <!-- Links -->
+    <section>
+        <h2 data-en="Find me" data-zh="联系我">Find me</h2>
+        <div class="links">
+
+            <a href="mailto:hejiaji16888@gmail.com">
+                <!-- Email icon -->
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="4" width="20" height="16" rx="2"/>
+                    <polyline points="2,4 12,13 22,4"/>
+                </svg>
+                Email
+            </a>
+
+            <a href="https://github.com/hejiaji" target="_blank" rel="noopener">
+                <!-- GitHub icon -->
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.009-.868-.013-1.703-2.782.605-3.369-1.34-3.369-1.34-.454-1.154-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0 1 12 6.836a9.59 9.59 0 0 1 2.504.337c1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.202 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/>
+                </svg>
+                GitHub
+            </a>
+
+            <a href="https://www.linkedin.com/in/jeremy-he-a5809611a" target="_blank" rel="noopener">
+                <!-- LinkedIn icon -->
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20.447 20.452H17.19v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.945V9h3.13v1.561h.046c.435-.824 1.497-1.694 3.082-1.694 3.296 0 3.904 2.17 3.904 4.994v6.591zM5.337 7.433a1.817 1.817 0 1 1 0-3.633 1.817 1.817 0 0 1 0 3.633zM6.969 20.452H3.7V9h3.27v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                </svg>
+                LinkedIn
+            </a>
+
+            <a href="https://hejiaji.cn/resume" target="_blank" rel="noopener">
+                <!-- Resume icon -->
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14,2 14,8 20,8"/>
+                    <line x1="8" y1="13" x2="16" y2="13"/>
+                    <line x1="8" y1="17" x2="16" y2="17"/>
+                    <line x1="10" y1="9" x2="8" y2="9"/>
+                </svg>
+                Resume
+            </a>
+
+        </div>
+    </section>
+
+</main>
+
 <footer>
-    <div class="container">
-        <div class="row">
-            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-                <ul class="list-inline text-center">
-                
-                
-                
-
-                
-                    <li>
-                        <a target="_blank" href="https://hejiaji.cn/resume/">
-                            <span class="fa-stack fa-lg">
-                                <i class="fa fa-circle fa-stack-2x"></i>
-                                <i class="fa fa-user fa-stack-1x fa-inverse"></i>
-                            </span>
-                        </a>
-                    </li>
-                
-
-                
-                    <li>
-                        <a target="_blank" href="https://www.facebook.com/100004249878606">
-                            <span class="fa-stack fa-lg">
-                                <i class="fa fa-circle fa-stack-2x"></i>
-                                <i class="fa fa-facebook fa-stack-1x fa-inverse"></i>
-                            </span>
-                        </a>
-                    </li>
-                
-
-                
-                    <li>
-                        <a target="_blank"  href="https://github.com/hejiaji">
-                            <span class="fa-stack fa-lg">
-                                <i class="fa fa-circle fa-stack-2x"></i>
-                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
-                            </span>
-                        </a>
-                    </li>
-                
-
-                
-                    <li>
-                        <a target="_blank"  href="https://www.linkedin.com/in/jeremy-he-a5809611a">
-                            <span class="fa-stack fa-lg">
-                                <i class="fa fa-circle fa-stack-2x"></i>
-                                <i class="fa fa-linkedin fa-stack-1x fa-inverse"></i>
-                            </span>
-                        </a>
-                    </li>
-                
-
-                </ul>
-                <p class="copyright text-muted">
-                    Copyright &copy; Jeremy He&#39;s Blog 2021
-                </p>
-            </div>
-        </div>
-    </div>
+    &copy; <span id="yr"></span> Jeremy He &nbsp;·&nbsp; Sydney, Australia
 </footer>
 
-<!-- jQuery -->
-<script src="/js/jquery.min.js"></script>
-
-<!-- Bootstrap Core JavaScript -->
-<script src="/js/bootstrap.min.js"></script>
-
-<!-- Custom Theme JavaScript -->
-<script src="/js/hux-blog.min.js"></script>
-
-
-<!-- async load function -->
 <script>
-    function async(u, c) {
-      var d = document, t = 'script',
-          o = d.createElement(t),
-          s = d.getElementsByTagName(t)[0];
-      o.src = u;
-      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
-      s.parentNode.insertBefore(o, s);
+    document.getElementById('yr').textContent = new Date().getFullYear();
+
+    // ── Theme ──
+    const root = document.documentElement;
+    const themeBtn = document.getElementById('themeBtn');
+    const themeLabel = document.getElementById('themeLabel');
+    const themeIcon = document.getElementById('themeIcon');
+
+    const sunIcon = `<path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/><circle cx="12" cy="12" r="5"/>`;
+    const moonIcon = `<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>`;
+
+    const savedTheme = localStorage.getItem('theme') ||
+        (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    applyTheme(savedTheme);
+
+    function applyTheme(theme) {
+        root.setAttribute('data-theme', theme);
+        if (theme === 'dark') {
+            themeIcon.innerHTML = sunIcon;
+            themeLabel.textContent = 'Light';
+        } else {
+            themeIcon.innerHTML = moonIcon;
+            themeLabel.textContent = 'Dark';
+        }
+        localStorage.setItem('theme', theme);
+    }
+
+    function toggleTheme() {
+        applyTheme(root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+    }
+
+    // ── Language ──
+    let lang = localStorage.getItem('lang') || 'en';
+    applyLang(lang);
+
+    function applyLang(l) {
+        lang = l;
+        document.querySelectorAll('[data-en]').forEach(el => {
+            el.innerHTML = el.getAttribute('data-' + l);
+        });
+        document.getElementById('langLabel').textContent = l === 'en' ? '中文' : 'EN';
+        localStorage.setItem('lang', l);
+    }
+
+    function toggleLang() {
+        applyLang(lang === 'en' ? 'zh' : 'en');
     }
 </script>
-
-<!-- 
-     Because of the native support for backtick-style fenced code blocks 
-     right within the Markdown is landed in Github Pages, 
-     From V1.6, There is no need for Highlight.js, 
-     so Huxblog drops it officially.
-
-     - https://github.com/blog/2100-github-pages-now-faster-and-simpler-with-jekyll-3-0  
-     - https://help.github.com/articles/creating-and-highlighting-code-blocks/    
--->
-<!--
-    <script>
-        async("http://cdn.bootcss.com/highlight.js/8.6/highlight.min.js", function(){
-            hljs.initHighlightingOnLoad();
-        })
-    </script>
-    <link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
--->
-
-
-<!-- jquery.tagcloud.js -->
-<script>
-    // only load tagcloud.js in tag.html
-    if($('#tag_cloud').length !== 0){
-        async("http://hejiaji.cn/js/jquery.tagcloud.js",function(){
-            $.fn.tagcloud.defaults = {
-                //size: {start: 1, end: 1, unit: 'em'},
-                color: {start: '#bbbbee', end: '#0085a1'},
-            };
-            $('#tag_cloud a').tagcloud();
-        })
-    }
-</script>
-
-<!--fastClick.js -->
-<script>
-    async("//cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js", function(){
-        var $nav = document.querySelector("nav");
-        if($nav) FastClick.attach($nav);
-    })
-</script>
-
-
-<!-- Google Analytics -->
-
-
-
-
-<!-- Baidu Tongji -->
-
-
-<!-- Side Catalog -->
-
-
-
 
 </body>
-
 </html>
