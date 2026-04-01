@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-visual">
     <meta name="description" content="Jeremy He — macOS-style portfolio">
     <link rel="shortcut icon" href="/img/favicon.ico">
     <title>Jeremy He · Desktop</title>
@@ -820,10 +820,13 @@
             /* Desktop icons hidden on mobile (use dock) */
             .desktop-icon { display: none; }
 
-            /* Windows fill screen */
+            /*
+             * Windows fill screen — use --stable-vh (set by JS on load)
+             * so the virtual keyboard doesn't resize the layout.
+             */
             .window {
                 width: 100vw !important;
-                height: calc(100vh - var(--menubar-h) - 88px) !important;
+                height: calc(var(--stable-vh, 100vh) - var(--menubar-h) - 88px) !important;
                 left: 0 !important;
                 top: var(--menubar-h) !important;
                 border-radius: 0 !important;
@@ -836,29 +839,46 @@
             /* Hide resize handle on mobile */
             .win-resize { display: none; }
 
-            /* Sidebar becomes a top tab bar on mobile */
-            .win-body { flex-direction: column; }
+            /* Sidebar becomes a compact top tab bar on mobile */
+            .win-body { flex-direction: column; overflow: hidden; }
             .win-sidebar {
                 width: 100%;
                 border-right: none;
                 border-bottom: 1px solid rgba(0,0,0,0.08);
-                padding: 6px 8px;
+                padding: 4px 8px;
                 display: flex;
                 flex-direction: row;
                 gap: 4px;
                 overflow-x: auto;
+                flex-shrink: 0;
             }
             .sidebar-section { display: contents; }
             .sidebar-heading { display: none; }
             .sidebar-item {
                 flex-shrink: 0;
                 margin: 0;
-                padding: 5px 10px;
-                font-size: 12px;
+                padding: 4px 8px;
+                font-size: 11px;
             }
 
-            /* Terminal fills nicely */
+            /* Content pane — smaller padding on mobile */
+            .win-content {
+                padding: 14px 16px;
+                overflow-y: auto;
+            }
+            .win-content h2 { font-size: 17px; }
+            .win-content p { font-size: 12px; }
+            .win-content .subtitle { font-size: 11px; margin-bottom: 12px; }
+
+            /* About window — avatar smaller on mobile */
+            #pane-about-bio img { width: 48px !important; height: 48px !important; }
+
+            /* Project grid single column on mobile */
+            .proj-grid { grid-template-columns: 1fr; }
+
+            /* Terminal fills nicely — prevent keyboard resize */
             .terminal-body { font-size: 12px; }
+            .term-input { font-size: 16px; } /* >= 16px prevents iOS auto-zoom on focus */
 
             /* Apple dropdown fills from left */
             .menu-dropdown { min-width: 200px; }
@@ -1272,6 +1292,30 @@
 </div>
 
 <script>
+    /* ══════════════════════════════════════
+       STABLE VIEWPORT HEIGHT (mobile keyboard fix)
+       Capture the initial viewport height so the virtual
+       keyboard doesn't resize windows when it opens.
+    ══════════════════════════════════════ */
+    (function setStableVH() {
+        const vh = window.innerHeight;
+        document.documentElement.style.setProperty('--stable-vh', vh + 'px');
+        // Also lock the body height so scrolling doesn't occur
+        document.body.style.height = vh + 'px';
+        // Update on orientation change (but not on keyboard open/close)
+        let lastWidth = window.innerWidth;
+        window.addEventListener('resize', () => {
+            // Only update if the width changed (orientation change),
+            // not if only the height changed (keyboard open/close).
+            if (window.innerWidth !== lastWidth) {
+                lastWidth = window.innerWidth;
+                const newVH = window.innerHeight;
+                document.documentElement.style.setProperty('--stable-vh', newVH + 'px');
+                document.body.style.height = newVH + 'px';
+            }
+        });
+    })();
+
     /* ══════════════════════════════════════
        CLOCK
     ══════════════════════════════════════ */
@@ -1701,6 +1745,19 @@
         const inp = document.getElementById('term-input');
         if (inp) inp.focus();
     });
+
+    // On mobile, when the virtual keyboard opens, scroll the terminal
+    // input into view inside the terminal body (not the whole page).
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', () => {
+            const inp = document.getElementById('term-input');
+            if (inp && document.activeElement === inp) {
+                requestAnimationFrame(() => {
+                    termOutput.scrollTop = termOutput.scrollHeight;
+                });
+            }
+        });
+    }
 
     /* ══════════════════════════════════════
        SOUND ENGINE (Web Audio API — no files)
