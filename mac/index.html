@@ -1,0 +1,2011 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Jeremy He — macOS-style portfolio">
+    <link rel="shortcut icon" href="/img/favicon.ico">
+    <title>Jeremy He · Desktop</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --menubar-h: 28px;
+            --dock-h: 72px;
+            --bg: #1d6fa4;
+            --win-bg: rgba(255,255,255,0.92);
+            --win-bg-dark: rgba(30,30,32,0.92);
+            --win-border: rgba(0,0,0,0.18);
+            --win-title: #3a3a3c;
+            --sidebar-bg: rgba(240,240,245,0.85);
+            --sidebar-bg-dark: rgba(40,40,44,0.85);
+            --text: #1a1a1a;
+            --muted: #888;
+            --accent: #0071e3;
+            --border: rgba(0,0,0,0.1);
+        }
+
+        html, body {
+            width: 100%; height: 100%; overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+            font-size: 13px;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* ══════════════════════════════
+           DESKTOP
+        ══════════════════════════════ */
+        #desktop {
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse at 30% 40%, #1a6faa 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 70%, #0f4f80 0%, transparent 50%),
+                linear-gradient(160deg, #1b6ca8 0%, #0d3b6e 50%, #051d3a 100%);
+            overflow: hidden;
+        }
+
+        /* Wallpaper subtle orbs */
+        #desktop::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(circle at 20% 30%, rgba(100,180,255,0.15) 0%, transparent 40%),
+                radial-gradient(circle at 75% 65%, rgba(80,140,220,0.12) 0%, transparent 35%);
+            pointer-events: none;
+        }
+
+        /* ══════════════════════════════
+           MENU BAR
+        ══════════════════════════════ */
+        #menubar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: var(--menubar-h);
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(20px) saturate(1.8);
+            -webkit-backdrop-filter: blur(20px) saturate(1.8);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 12px;
+            z-index: 9000;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+
+        #menubar-left {
+            display: flex;
+            align-items: center;
+            gap: 0;
+        }
+
+        .menu-item {
+            padding: 2px 10px;
+            border-radius: 5px;
+            color: #fff;
+            font-size: 13px;
+            cursor: default;
+            transition: background 0.15s;
+            white-space: nowrap;
+        }
+
+        .menu-item:hover { background: rgba(255,255,255,0.2); }
+        .menu-item.apple { font-size: 16px; font-weight: 700; padding: 2px 12px; }
+
+        #menubar-right {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: #fff;
+            font-size: 12px;
+        }
+
+        .menubar-icon {
+            padding: 2px 6px;
+            border-radius: 5px;
+            cursor: default;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: background 0.15s;
+        }
+        .menubar-icon:hover { background: rgba(255,255,255,0.2); }
+
+        #clock { font-size: 12px; font-weight: 400; }
+
+        /* ── Menu dropdowns (shared) ── */
+        .menu-parent { position: relative; }
+
+        .menu-dropdown {
+            position: absolute;
+            top: calc(100% + 2px);
+            left: 0;
+            background: rgba(235,235,240,0.96);
+            backdrop-filter: blur(30px) saturate(2);
+            -webkit-backdrop-filter: blur(30px) saturate(2);
+            border-radius: 8px;
+            border: 1px solid rgba(0,0,0,0.12);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.28), 0 0 0 0.5px rgba(255,255,255,0.4) inset;
+            min-width: 210px;
+            padding: 4px 0;
+            z-index: 9999;
+            display: none;
+            pointer-events: none;
+        }
+
+        .menu-dropdown.open {
+            display: block;
+            pointer-events: all;
+            animation: dropIn 0.14s ease;
+        }
+
+        @keyframes dropIn {
+            from { opacity: 0; transform: scale(0.97) translateY(-4px); }
+            to   { opacity: 1; transform: scale(1)    translateY(0); }
+        }
+
+        .adrop-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 5px 14px;
+            font-size: 13px;
+            color: #1a1a1a;
+            cursor: default;
+            border-radius: 4px;
+            margin: 0 4px;
+            transition: background 0.1s;
+            white-space: nowrap;
+            gap: 24px;
+        }
+
+        .adrop-item:hover { background: var(--accent); color: #fff; }
+        .adrop-disabled { color: #999 !important; pointer-events: none; }
+        .adrop-shortcut { font-size: 11px; opacity: 0.5; margin-left: auto; }
+
+        .adrop-sep {
+            height: 1px;
+            background: rgba(0,0,0,0.1);
+            margin: 4px 0;
+        }
+
+        /* Active menu item highlight in menubar */
+        .menu-parent.active > .menu-item { background: rgba(255,255,255,0.2); }
+
+
+        /* ══════════════════════════════
+           WINDOWS
+        ══════════════════════════════ */
+        .window {
+            position: absolute;
+            background: var(--win-bg);
+            border-radius: 12px;
+            box-shadow:
+                0 22px 70px rgba(0,0,0,0.45),
+                0 0 0 0.5px rgba(0,0,0,0.3),
+                inset 0 0 0 0.5px rgba(255,255,255,0.6);
+            backdrop-filter: blur(30px) saturate(2);
+            -webkit-backdrop-filter: blur(30px) saturate(2);
+            min-width: 280px;
+            min-height: 180px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: box-shadow 0.2s, opacity 0.2s;
+            will-change: transform;
+        }
+
+        .window.inactive {
+            box-shadow:
+                0 10px 40px rgba(0,0,0,0.25),
+                0 0 0 0.5px rgba(0,0,0,0.2);
+        }
+
+        .window.minimized { display: none; }
+
+        /* Title bar */
+        .win-titlebar {
+            height: 38px;
+            display: flex;
+            align-items: center;
+            padding: 0 14px;
+            background: rgba(255,255,255,0.5);
+            border-bottom: 1px solid rgba(0,0,0,0.08);
+            cursor: grab;
+            flex-shrink: 0;
+            border-radius: 12px 12px 0 0;
+            gap: 8px;
+        }
+
+        .win-titlebar:active { cursor: grabbing; }
+
+        .win-title {
+            flex: 1;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 600;
+            color: #3a3a3c;
+            pointer-events: none;
+        }
+
+        /* Traffic lights */
+        .traffic-lights {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .tl {
+            width: 12px; height: 12px;
+            border-radius: 50%;
+            cursor: pointer;
+            position: relative;
+            transition: filter 0.15s;
+        }
+
+        .tl-close  { background: #ff5f57; border: 0.5px solid rgba(0,0,0,0.12); }
+        .tl-min    { background: #febc2e; border: 0.5px solid rgba(0,0,0,0.12); }
+        .tl-max    { background: #28c840; border: 0.5px solid rgba(0,0,0,0.12); }
+
+        .tl:hover { filter: brightness(0.85); }
+
+        .tl-close::before, .tl-close::after,
+        .tl-min::before,
+        .tl-max::before, .tl-max::after {
+            content: '';
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+            transition: opacity 0.15s;
+        }
+
+        .traffic-lights:hover .tl-close::before,
+        .traffic-lights:hover .tl-close::after {
+            opacity: 1;
+            width: 6px; height: 1px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 1px;
+        }
+        .traffic-lights:hover .tl-close::before { transform: translate(-50%,-50%) rotate(45deg); }
+        .traffic-lights:hover .tl-close::after  { transform: translate(-50%,-50%) rotate(-45deg); }
+
+        .traffic-lights:hover .tl-min::before {
+            opacity: 1;
+            width: 7px; height: 1px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 1px;
+        }
+
+        .traffic-lights:hover .tl-max::before {
+            opacity: 1;
+            width: 5px; height: 5px;
+            border: 1.5px solid rgba(0,0,0,0.5);
+            border-radius: 1px;
+        }
+
+        /* Window body */
+        .win-body {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+        }
+
+        /* Sidebar */
+        .win-sidebar {
+            width: 160px;
+            flex-shrink: 0;
+            background: var(--sidebar-bg);
+            border-right: 1px solid rgba(0,0,0,0.08);
+            padding: 12px 0;
+            overflow-y: auto;
+        }
+
+        .sidebar-section {
+            margin-bottom: 18px;
+        }
+
+        .sidebar-heading {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: #999;
+            padding: 0 14px;
+            margin-bottom: 4px;
+        }
+
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 14px;
+            border-radius: 6px;
+            margin: 0 6px;
+            cursor: default;
+            font-size: 12.5px;
+            color: #1a1a1a;
+            transition: background 0.12s;
+        }
+
+        .sidebar-item:hover { background: rgba(0,0,0,0.06); }
+        .sidebar-item.active { background: var(--accent); color: #fff; }
+        .sidebar-item .si-icon { font-size: 14px; width: 18px; text-align: center; }
+
+        /* Content pane */
+        .win-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 24px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #1a1a1a;
+        }
+
+        .win-content h2 {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 6px;
+            color: #1a1a1a;
+        }
+
+        .win-content h3 {
+            font-size: 13px;
+            font-weight: 600;
+            color: #444;
+            margin: 16px 0 6px;
+        }
+
+        .win-content p {
+            color: #444;
+            margin-bottom: 10px;
+            font-size: 13px;
+        }
+
+        .win-content .subtitle {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 20px;
+        }
+
+        /* Tags */
+        .tag-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+        .tag {
+            background: rgba(0,113,227,0.08);
+            color: var(--accent);
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 9px;
+            border-radius: 20px;
+            border: 1px solid rgba(0,113,227,0.15);
+        }
+
+        /* Timeline row */
+        .timeline-item {
+            display: flex;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.06);
+        }
+        .timeline-item:last-child { border-bottom: none; }
+        .tl-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--accent);
+            margin-top: 5px;
+            flex-shrink: 0;
+        }
+        .tl-info .tl-title { font-weight: 600; font-size: 13px; color: #1a1a1a; }
+        .tl-info .tl-sub   { font-size: 11px; color: #888; margin-top: 1px; }
+
+        /* Project cards */
+        .proj-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .proj-card {
+            background: rgba(0,0,0,0.03);
+            border: 1px solid rgba(0,0,0,0.08);
+            border-radius: 10px;
+            padding: 12px 14px;
+            transition: background 0.15s, box-shadow 0.15s;
+            cursor: default;
+        }
+        .proj-card:hover {
+            background: rgba(0,0,0,0.06);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+        }
+        .proj-card .pc-icon { font-size: 22px; margin-bottom: 6px; }
+        .proj-card .pc-name { font-weight: 600; font-size: 12.5px; margin-bottom: 3px; }
+        .proj-card .pc-desc { font-size: 11.5px; color: #777; }
+
+        /* ══════════════════════════════
+           TERMINAL WINDOW
+        ══════════════════════════════ */
+        .terminal-body {
+            background: #1e1e2e;
+            color: #cdd6f4;
+            font-family: "SF Mono", "Fira Code", "Menlo", monospace;
+            font-size: 12.5px;
+            padding: 14px 16px;
+            flex: 1;
+            overflow-y: auto;
+            line-height: 1.7;
+        }
+
+        .term-line { display: flex; gap: 6px; align-items: flex-start; }
+        .term-prompt { color: #a6e3a1; flex-shrink: 0; }
+        .term-cmd { color: #89dceb; }
+        .term-output { color: #cdd6f4; margin-left: 0; white-space: pre-wrap; }
+        .term-output.dim { color: #6c7086; }
+        .term-output.green { color: #a6e3a1; }
+        .term-output.blue { color: #89b4fa; }
+        .term-output.yellow { color: #f9e2af; }
+        .term-output.pink { color: #f38ba8; }
+        .term-output.mauve { color: #cba6f7; }
+
+        .term-input-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 6px;
+        }
+
+        .term-input {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #89dceb;
+            font-family: inherit;
+            font-size: 12.5px;
+            flex: 1;
+            caret-color: #a6e3a1;
+        }
+
+        .term-cursor {
+            display: inline-block;
+            width: 8px; height: 14px;
+            background: #a6e3a1;
+            animation: blink 1s step-end infinite;
+            vertical-align: middle;
+        }
+
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+        /* ══════════════════════════════
+           DOCK
+        ══════════════════════════════ */
+        #dock {
+            position: fixed;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            padding: 8px 14px;
+            background: rgba(255,255,255,0.22);
+            backdrop-filter: blur(30px) saturate(2);
+            -webkit-backdrop-filter: blur(30px) saturate(2);
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.3);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3), inset 0 0.5px 0 rgba(255,255,255,0.4);
+            z-index: 8000;
+        }
+
+        .dock-sep {
+            width: 1px;
+            height: 40px;
+            background: rgba(255,255,255,0.3);
+            margin: 0 2px;
+            align-self: center;
+        }
+
+        .dock-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            cursor: pointer;
+            transition: transform 0.15s cubic-bezier(0.34,1.56,0.64,1);
+            position: relative;
+        }
+
+        .dock-item:hover {
+            transform: translateY(-14px) scale(1.35);
+        }
+
+        .dock-item:hover .dock-label {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .dock-icon {
+            width: 52px; height: 52px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            transition: inherit;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .dock-dot {
+            width: 5px; height: 5px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.8);
+        }
+
+        .dock-label {
+            position: absolute;
+            bottom: calc(100% + 14px);
+            left: 50%;
+            transform: translateX(-50%) translateY(4px);
+            background: rgba(30,30,30,0.85);
+            color: #fff;
+            font-size: 11px;
+            font-weight: 500;
+            padding: 3px 8px;
+            border-radius: 6px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.15s, transform 0.15s;
+        }
+
+        /* Dock icon colours */
+        .di-finder   { background: linear-gradient(160deg, #4fc3f7, #1976d2); }
+        .di-about    { background: linear-gradient(160deg, #81c784, #388e3c); }
+        .di-resume   { background: linear-gradient(160deg, #ff8a65, #e64a19); }
+        .di-projects { background: linear-gradient(160deg, #ba68c8, #7b1fa2); }
+        .di-terminal { background: linear-gradient(160deg, #455a64, #263238); }
+        .di-github   { background: linear-gradient(160deg, #616161, #212121); }
+        .di-mail     { background: linear-gradient(160deg, #42a5f5, #1565c0); }
+        .di-safari   { background: linear-gradient(160deg, #4fc3f7, #0288d1); }
+
+        /* ══════════════════════════════
+           DESKTOP ICONS
+        ══════════════════════════════ */
+        .desktop-icon {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 8px;
+            transition: background 0.15s;
+            width: 80px;
+        }
+
+        .desktop-icon:hover { background: rgba(255,255,255,0.15); }
+        .desktop-icon .di-ico { font-size: 38px; line-height: 1; }
+        .desktop-icon .di-lbl {
+            font-size: 11px;
+            color: #fff;
+            text-align: center;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+            line-height: 1.3;
+            word-break: break-word;
+        }
+
+        /* Resize handle */
+        .win-resize {
+            position: absolute;
+            right: 0; bottom: 0;
+            width: 16px; height: 16px;
+            cursor: se-resize;
+        }
+        .win-resize::after {
+            content: '';
+            position: absolute;
+            right: 4px; bottom: 4px;
+            width: 8px; height: 8px;
+            border-right: 2px solid rgba(0,0,0,0.2);
+            border-bottom: 2px solid rgba(0,0,0,0.2);
+            border-radius: 1px;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 3px; }
+
+        /* ══════════════════════════════
+           SPOTLIGHT
+        ══════════════════════════════ */
+        #spotlight-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.35);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 99000;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding-top: 18vh;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+
+        #spotlight-overlay.open {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        #spotlight-box {
+            width: 620px;
+            max-width: 90vw;
+            background: rgba(255,255,255,0.82);
+            backdrop-filter: blur(40px) saturate(2);
+            -webkit-backdrop-filter: blur(40px) saturate(2);
+            border-radius: 16px;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.4), 0 0 0 0.5px rgba(255,255,255,0.5);
+            overflow: hidden;
+            transform: scale(0.96);
+            transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1);
+        }
+
+        #spotlight-overlay.open #spotlight-box {
+            transform: scale(1);
+        }
+
+        #spotlight-input-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 18px;
+            border-bottom: 1px solid rgba(0,0,0,0.08);
+        }
+
+        #spotlight-input-wrap svg {
+            width: 20px; height: 20px;
+            color: #888;
+            flex-shrink: 0;
+        }
+
+        #spotlight-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            font-size: 20px;
+            font-family: inherit;
+            color: #1a1a1a;
+            caret-color: var(--accent);
+        }
+
+        #spotlight-input::placeholder { color: #aaa; }
+
+        #spotlight-results {
+            max-height: 360px;
+            overflow-y: auto;
+            padding: 6px 0;
+        }
+
+        .sp-section-title {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #999;
+            padding: 8px 18px 4px;
+        }
+
+        .sp-result {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 18px;
+            cursor: default;
+            transition: background 0.1s;
+            border-radius: 8px;
+            margin: 0 6px;
+        }
+
+        .sp-result:hover, .sp-result.selected {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .sp-result:hover .sp-sub, .sp-result.selected .sp-sub { color: rgba(255,255,255,0.7); }
+
+        .sp-icon {
+            width: 32px; height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .sp-info .sp-title { font-size: 13px; font-weight: 500; }
+        .sp-info .sp-sub   { font-size: 11px; color: #888; }
+
+        #spotlight-empty {
+            text-align: center;
+            padding: 24px;
+            color: #999;
+            font-size: 13px;
+        }
+
+        /* ══════════════════════════════
+           NOTIFICATIONS
+        ══════════════════════════════ */
+        #notif-container {
+            position: fixed;
+            top: 36px;
+            right: 12px;
+            z-index: 98000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            pointer-events: none;
+        }
+
+        .notif {
+            background: rgba(255,255,255,0.88);
+            backdrop-filter: blur(30px) saturate(2);
+            -webkit-backdrop-filter: blur(30px) saturate(2);
+            border-radius: 14px;
+            border: 1px solid rgba(0,0,0,0.1);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+            padding: 12px 14px;
+            width: 300px;
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            pointer-events: all;
+            transform: translateX(320px);
+            opacity: 0;
+            transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1), opacity 0.25s;
+        }
+
+        .notif.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .notif.hide {
+            transform: translateX(320px);
+            opacity: 0;
+            transition: transform 0.25s ease-in, opacity 0.2s ease-in;
+        }
+
+        .notif-icon {
+            width: 36px; height: 36px;
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .notif-content { flex: 1; min-width: 0; }
+        .notif-app  { font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.04em; }
+        .notif-title { font-size: 13px; font-weight: 600; color: #1a1a1a; margin-top: 1px; }
+        .notif-body  { font-size: 12px; color: #555; margin-top: 2px; line-height: 1.4; }
+
+        .notif-close {
+            font-size: 14px;
+            color: #aaa;
+            cursor: pointer;
+            line-height: 1;
+            flex-shrink: 0;
+            padding: 2px;
+        }
+        .notif-close:hover { color: #555; }
+
+        /* ══════════════════════════════
+           MOBILE
+        ══════════════════════════════ */
+        @media (max-width: 640px) {
+            /* Dock */
+            #dock { gap: 4px; padding: 6px 8px; bottom: 6px; border-radius: 16px; }
+            .dock-icon { width: 44px; height: 44px; font-size: 24px; border-radius: 12px; }
+            .dock-item:hover { transform: translateY(-8px) scale(1.2); }
+            .dock-label { display: none; }
+            .dock-sep { height: 32px; }
+
+            /* Menubar — hide text menus, show only  + clock */
+            .menu-item:not(.apple) { display: none; }
+            #menubar-right .menubar-icon:not(#clock-wrap) { display: none; }
+
+            /* Desktop icons hidden on mobile (use dock) */
+            .desktop-icon { display: none; }
+
+            /* Windows fill screen */
+            .window {
+                width: 100vw !important;
+                height: calc(100vh - var(--menubar-h) - 88px) !important;
+                left: 0 !important;
+                top: var(--menubar-h) !important;
+                border-radius: 0 !important;
+                min-width: unset;
+            }
+
+            /* Disable dragging cursor on mobile */
+            .win-titlebar { cursor: default; }
+
+            /* Hide resize handle on mobile */
+            .win-resize { display: none; }
+
+            /* Sidebar becomes a top tab bar on mobile */
+            .win-body { flex-direction: column; }
+            .win-sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid rgba(0,0,0,0.08);
+                padding: 6px 8px;
+                display: flex;
+                flex-direction: row;
+                gap: 4px;
+                overflow-x: auto;
+            }
+            .sidebar-section { display: contents; }
+            .sidebar-heading { display: none; }
+            .sidebar-item {
+                flex-shrink: 0;
+                margin: 0;
+                padding: 5px 10px;
+                font-size: 12px;
+            }
+
+            /* Terminal fills nicely */
+            .terminal-body { font-size: 12px; }
+
+            /* Apple dropdown fills from left */
+            .menu-dropdown { min-width: 200px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ══ MENU BAR ══ -->
+<div id="menubar">
+    <div id="menubar-left">
+
+        <!-- Apple -->
+        <div class="menu-parent" id="mp-apple">
+            <span class="menu-item apple" onclick="toggleMenu('apple',event)">&#63743;</span>
+            <div class="menu-dropdown" id="md-apple">
+                <div class="adrop-item" onclick="openWindow('about'); closeMenus()">About This Mac</div>
+                <div class="adrop-sep"></div>
+                <div class="adrop-item adrop-disabled">System Preferences…</div>
+                <div class="adrop-item adrop-disabled">App Store…</div>
+                <div class="adrop-sep"></div>
+                <div class="adrop-item adrop-disabled">Recent Items <span class="adrop-shortcut">▶</span></div>
+                <div class="adrop-sep"></div>
+                <div class="adrop-item adrop-disabled">Force Quit… <span class="adrop-shortcut">⌥⌘⎋</span></div>
+                <div class="adrop-sep"></div>
+                <div class="adrop-item adrop-disabled">Sleep</div>
+                <div class="adrop-item adrop-disabled">Restart…</div>
+                <div class="adrop-item adrop-disabled">Shut Down…</div>
+                <div class="adrop-sep"></div>
+                <div class="adrop-item adrop-disabled">Lock Screen <span class="adrop-shortcut">⌃⌘Q</span></div>
+                <div class="adrop-item adrop-disabled">Log Out Jeremy He… <span class="adrop-shortcut">⇧⌘Q</span></div>
+            </div>
+        </div>
+
+        <!-- Finder -->
+        <div class="menu-parent" id="mp-finder">
+            <span class="menu-item" style="font-weight:600;" onclick="toggleMenu('finder',event)">Finder</span>
+            <div class="menu-dropdown" id="md-finder">
+                <div class="adrop-item adrop-disabled">About Finder</div>
+                <div class="adrop-sep"></div>
+                <div class="adrop-item adrop-disabled">Preferences… <span class="adrop-shortcut">⌘,</span></div>
+                <div class="adrop-sep"></div>
+                <div class="adrop-item adrop-disabled">Empty Trash… <span class="adrop-shortcut">⇧⌘⌫</span></div>
+                <div class="adrop-sep"></div>
+                <div class="adrop-item adrop-disabled">Services <span class="adrop-shortcut">▶</span></div>
+                <div class="adrop-sep"></div>
+                <div class="adrop-item adrop-disabled">Hide Finder <span class="adrop-shortcut">⌘H</span></div>
+                <div class="adrop-item adrop-disabled">Hide Others <span class="adrop-shortcut">⌥⌘H</span></div>
+                <div class="adrop-item adrop-disabled">Show All</div>
+            </div>
+        </div>
+
+        <!-- File -->
+        <div class="menu-parent" id="mp-file">
+            <span class="menu-item" onclick="toggleMenu('file',event)">File</span>
+            <div class="menu-dropdown" id="md-file">
+                <div class="adrop-item adrop-disabled">New Finder Window <span class="adrop-shortcut">⌘N</span></div>
+                <div class="adrop-item adrop-disabled">New Folder <span class="adrop-shortcut">⇧⌘N</span></div>
+                <div class="adrop-item adrop-disabled">New Smart Folder</div>
+                <div class="adrop-sep"></div>
+                <div class="adrop-item adrop-disabled">Open <span class="adrop-shortcut">⌘O</span></div>
+                <div class="adrop-item adrop-disabled">Close Window <span class="adrop-shortcut">⌘W</span></div>
+                <div class="adrop-sep"></div>
+                <div class="adrop-item adrop-disabled">Get Info <span class="adrop-shortcut">⌘I</span></div>
+                <div class="adrop-sep"></div>
+                <div class="adrop-item adrop-disabled">Move to Trash <span class="adrop-shortcut">⌘⌫</span></div>
+            </div>
+        </div>
+
+        <!-- Edit -->
+        <div class="menu-parent" id="mp-edit">
+            <span class="menu-item" onclick="toggleMenu('edit',event)">Edit</span>
+            <div class="menu-dropdown" id="md-edit">
+                <div class="adrop-item adrop-disabled">Undo <span class="adrop-shortcut">⌘Z</span></div>
+                <div class="adrop-item adrop-disabled">Redo <span class="adrop-shortcut">⇧⌘Z</span></div>
+                <div class="adrop-sep"></div>
+                <div class="adrop-item adrop-disabled">Cut <span class="adrop-shortcut">⌘X</span></div>
+                <div class="adrop-item adrop-disabled">Copy <span class="adrop-shortcut">⌘C</span></div>
+                <div class="adrop-item adrop-disabled">Paste <span class="adrop-shortcut">⌘V</span></div>
+                <div class="adrop-item adrop-disabled">Select All <span class="adrop-shortcut">⌘A</span></div>
+                <div class="adrop-sep"></div>
+                <div class="adrop-item adrop-disabled">Find <span class="adrop-shortcut">⌘F</span></div>
+            </div>
+        </div>
+
+        <!-- View -->
+        <div class="menu-parent" id="mp-view">
+            <span class="menu-item" onclick="toggleMenu('view',event)">View</span>
+            <div class="menu-dropdown" id="md-view">
+                <div class="adrop-item adrop-disabled">as Icons <span class="adrop-shortcut">⌘1</span></div>
+                <div class="adrop-item adrop-disabled">as List <span class="adrop-shortcut">⌘2</span></div>
+                <div class="adrop-item adrop-disabled">as Columns <span class="adrop-shortcut">⌘3</span></div>
+                <div class="adrop-sep"></div>
+                <div class="adrop-item adrop-disabled">Show Tab Bar</div>
+                <div class="adrop-item adrop-disabled">Show Path Bar</div>
+                <div class="adrop-item adrop-disabled">Show Status Bar</div>
+                <div class="adrop-sep"></div>
+                <div class="adrop-item adrop-disabled">Hide Toolbar</div>
+                <div class="adrop-item adrop-disabled">Enter Full Screen <span class="adrop-shortcut">⌃⌘F</span></div>
+            </div>
+        </div>
+
+        <!-- Go -->
+        <div class="menu-parent" id="mp-go">
+            <span class="menu-item" onclick="toggleMenu('go',event)">Go</span>
+            <div class="menu-dropdown" id="md-go">
+                <div class="adrop-item adrop-disabled">Back <span class="adrop-shortcut">⌘[</span></div>
+                <div class="adrop-item adrop-disabled">Forward <span class="adrop-shortcut">⌘]</span></div>
+                <div class="adrop-sep"></div>
+                <div class="adrop-item" onclick="openWindow('about'); closeMenus()">About Me <span class="adrop-shortcut">⌘1</span></div>
+                <div class="adrop-item" onclick="openWindow('projects'); closeMenus()">Projects <span class="adrop-shortcut">⌘2</span></div>
+                <div class="adrop-item" onclick="openTerminal(); closeMenus()">Terminal <span class="adrop-shortcut">⌘3</span></div>
+                <div class="adrop-sep"></div>
+                <div class="adrop-item" onclick="openURL('/'); closeMenus()">Home Page</div>
+                <div class="adrop-item" onclick="openURL('/resume/'); closeMenus()">Resume</div>
+            </div>
+        </div>
+
+        <!-- Window -->
+        <div class="menu-parent" id="mp-window">
+            <span class="menu-item" onclick="toggleMenu('window',event)">Window</span>
+            <div class="menu-dropdown" id="md-window">
+                <div class="adrop-item adrop-disabled">Minimise <span class="adrop-shortcut">⌘M</span></div>
+                <div class="adrop-item adrop-disabled">Zoom</div>
+                <div class="adrop-sep"></div>
+                <div class="adrop-item" onclick="openWindow('about'); closeMenus()">About Me</div>
+                <div class="adrop-item" onclick="openWindow('projects'); closeMenus()">Projects</div>
+                <div class="adrop-item" onclick="openTerminal(); closeMenus()">Terminal</div>
+                <div class="adrop-sep"></div>
+                <div class="adrop-item adrop-disabled">Bring All to Front</div>
+            </div>
+        </div>
+
+        <!-- Help -->
+        <div class="menu-parent" id="mp-help">
+            <span class="menu-item" onclick="toggleMenu('help',event)">Help</span>
+            <div class="menu-dropdown" id="md-help">
+                <div class="adrop-item adrop-disabled">Search <span class="adrop-shortcut">⌘?</span></div>
+                <div class="adrop-sep"></div>
+                <div class="adrop-item" onclick="openURL('mailto:hejiaji16888@gmail.com'); closeMenus()">Contact Jeremy</div>
+                <div class="adrop-item" onclick="openURL('https://github.com/hejiaji'); closeMenus()">GitHub</div>
+                <div class="adrop-item" onclick="openURL('/resume/'); closeMenus()">View Resume</div>
+            </div>
+        </div>
+
+    </div>
+    <div id="menubar-right">
+        <span class="menubar-icon">🔋</span>
+        <span class="menubar-icon">📶</span>
+        <span class="menubar-icon" onclick="openSpotlight()" style="cursor:pointer;">🔍</span>
+        <span class="menubar-icon" id="clock"></span>
+    </div>
+</div>
+
+<!-- ══ SPOTLIGHT ══ -->
+<div id="spotlight-overlay" onclick="closeSpotlight(event)">
+    <div id="spotlight-box">
+        <div id="spotlight-input-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input id="spotlight-input" type="text" placeholder="Spotlight Search" autocomplete="off" spellcheck="false">
+        </div>
+        <div id="spotlight-results"></div>
+    </div>
+</div>
+
+<!-- ══ NOTIFICATIONS ══ -->
+<div id="notif-container"></div>
+
+<!-- ══ DESKTOP ══ -->
+<div id="desktop">
+
+    <!-- Desktop icons -->
+    <div class="desktop-icon" style="top:50px; right:20px;" ondblclick="openWindow('about')">
+        <span class="di-ico">🧑‍🎤</span>
+        <span class="di-lbl">About Me</span>
+    </div>
+    <div class="desktop-icon" style="top:140px; right:20px;" ondblclick="openWindow('projects')">
+        <span class="di-ico">💼</span>
+        <span class="di-lbl">Projects</span>
+    </div>
+    <div class="desktop-icon" style="top:230px; right:20px;" ondblclick="openWindow('terminal')">
+        <span class="di-ico">🖥️</span>
+        <span class="di-lbl">Terminal</span>
+    </div>
+
+    <!-- ══ ABOUT WINDOW ══ -->
+    <div class="window" id="win-about" style="width:580px;height:420px;top:60px;left:120px;display:none;">
+        <div class="win-titlebar" data-win="about">
+            <div class="traffic-lights">
+                <div class="tl tl-close"  onclick="closeWindow('about')"></div>
+                <div class="tl tl-min"    onclick="minimizeWindow('about')"></div>
+                <div class="tl tl-max"    onclick="maximizeWindow('about')"></div>
+            </div>
+            <div class="win-title">About Me</div>
+            <div style="width:52px"></div>
+        </div>
+        <div class="win-body">
+            <div class="win-sidebar">
+                <div class="sidebar-section">
+                    <div class="sidebar-heading">Favourites</div>
+                    <div class="sidebar-item active" onclick="showPane('about','bio')">
+                        <span class="si-icon">🧑‍💻</span> Bio
+                    </div>
+                    <div class="sidebar-item" onclick="showPane('about','experience')">
+                        <span class="si-icon">💼</span> Experience
+                    </div>
+                    <div class="sidebar-item" onclick="showPane('about','skills')">
+                        <span class="si-icon">⚡</span> Skills
+                    </div>
+                </div>
+                <div class="sidebar-section">
+                    <div class="sidebar-heading">Links</div>
+                    <div class="sidebar-item" onclick="openURL('https://github.com/hejiaji')">
+                        <span class="si-icon">🐙</span> GitHub
+                    </div>
+                    <div class="sidebar-item" onclick="openURL('https://www.linkedin.com/in/hejiaji/')">
+                        <span class="si-icon">💼</span> LinkedIn
+                    </div>
+                    <div class="sidebar-item" onclick="openURL('/resume/')">
+                        <span class="si-icon">📄</span> Resume
+                    </div>
+                </div>
+            </div>
+            <div class="win-content" id="pane-about-bio">
+                <img src="/img/avatar.jpg" style="width:64px;height:64px;border-radius:50%;object-fit:cover;float:right;margin-left:16px;margin-bottom:8px;" alt="Jeremy He">
+                <h2>Jeremy He</h2>
+                <div class="subtitle">Full-stack Developer · Sydney, Australia 🇦🇺</div>
+                <p>Born in the 90s in China, now based in Sydney. I build things for the web — from polished UIs to scalable backends.</p>
+                <p>Currently a <strong>Senior Engineer at Atlassian</strong>, working on products used by millions of teams worldwide.</p>
+                <p>Into movies, sports, music &amp; travel when not shipping code.</p>
+                <div class="tag-row">
+                    <span class="tag">TypeScript</span>
+                    <span class="tag">React</span>
+                    <span class="tag">Node.js</span>
+                    <span class="tag">Go</span>
+                    <span class="tag">AWS</span>
+                    <span class="tag">GraphQL</span>
+                </div>
+            </div>
+            <div class="win-content" id="pane-about-experience" style="display:none">
+                <h2>Experience</h2>
+                <div class="subtitle">5 companies · 2 countries · 13+ years</div>
+                <div class="timeline-item">
+                    <div class="tl-dot"></div>
+                    <div class="tl-info">
+                        <div class="tl-title">🟠 Atlassian</div>
+                        <div class="tl-sub">Senior Engineer · 2021 – Present · Sydney</div>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="tl-dot" style="background:#e64a19"></div>
+                    <div class="tl-info">
+                        <div class="tl-title">🛡️ SafetyCulture</div>
+                        <div class="tl-sub">Senior Engineer · 2018 – 2021 · Sydney</div>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="tl-dot" style="background:#7b1fa2"></div>
+                    <div class="tl-info">
+                        <div class="tl-title">🔷 ThoughtWorks</div>
+                        <div class="tl-sub">Full-stack Developer · 2016 – 2018 · China</div>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="tl-dot" style="background:#388e3c"></div>
+                    <div class="tl-info">
+                        <div class="tl-title">🏢 Nagarro Objectiva</div>
+                        <div class="tl-sub">Developer · 2014 – 2016 · China</div>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="tl-dot" style="background:#888"></div>
+                    <div class="tl-info">
+                        <div class="tl-title">🏢 Pactera</div>
+                        <div class="tl-sub">Developer · 2012 – 2014 · China</div>
+                    </div>
+                </div>
+            </div>
+            <div class="win-content" id="pane-about-skills" style="display:none">
+                <h2>Skills</h2>
+                <div class="subtitle">Things I work with daily</div>
+                <h3>Frontend</h3>
+                <div class="tag-row">
+                    <span class="tag">React</span><span class="tag">TypeScript</span>
+                    <span class="tag">Next.js</span><span class="tag">CSS / Tailwind</span>
+                </div>
+                <h3>Backend</h3>
+                <div class="tag-row">
+                    <span class="tag">Node.js</span><span class="tag">Go</span>
+                    <span class="tag">GraphQL</span><span class="tag">REST</span>
+                </div>
+                <h3>Infrastructure</h3>
+                <div class="tag-row">
+                    <span class="tag">AWS</span><span class="tag">Docker</span>
+                    <span class="tag">Kubernetes</span><span class="tag">CI/CD</span>
+                </div>
+                <h3>Tools</h3>
+                <div class="tag-row">
+                    <span class="tag">Git</span><span class="tag">Figma</span>
+                    <span class="tag">Jira</span><span class="tag">Confluence</span>
+                </div>
+            </div>
+        </div>
+        <div class="win-resize"></div>
+    </div>
+
+    <!-- ══ PROJECTS WINDOW ══ -->
+    <div class="window" id="win-projects" style="width:520px;height:380px;top:110px;left:240px;display:none;">
+        <div class="win-titlebar" data-win="projects">
+            <div class="traffic-lights">
+                <div class="tl tl-close"  onclick="closeWindow('projects')"></div>
+                <div class="tl tl-min"    onclick="minimizeWindow('projects')"></div>
+                <div class="tl tl-max"    onclick="maximizeWindow('projects')"></div>
+            </div>
+            <div class="win-title">Projects</div>
+            <div style="width:52px"></div>
+        </div>
+        <div class="win-body">
+            <div class="win-content" style="padding:20px;">
+                <h2>Projects</h2>
+                <div class="subtitle">Things I've built &amp; shipped</div>
+                <div class="proj-grid">
+                    <div class="proj-card">
+                        <div class="pc-icon">🧩</div>
+                        <div class="pc-name">hejiaji.cn</div>
+                        <div class="pc-desc">Personal portfolio &amp; blog. Jekyll + GitHub Pages.</div>
+                    </div>
+                    <div class="proj-card">
+                        <div class="pc-icon">📋</div>
+                        <div class="pc-name">Resume Page</div>
+                        <div class="pc-desc">Interactive single-page resume with dark mode &amp; PDF export.</div>
+                    </div>
+                    <div class="proj-card">
+                        <div class="pc-icon">🖥️</div>
+                        <div class="pc-name">macOS Desktop</div>
+                        <div class="pc-desc">This page! A macOS-style interactive portfolio experience.</div>
+                    </div>
+                    <div class="proj-card">
+                        <div class="pc-icon">📝</div>
+                        <div class="pc-name">Blog Posts</div>
+                        <div class="pc-desc">Articles on CSS, Redux, iOS push notifications &amp; more.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="win-resize"></div>
+    </div>
+
+    <!-- ══ TERMINAL WINDOW ══ -->
+    <div class="window" id="win-terminal" style="width:520px;height:340px;top:160px;left:180px;display:none;">
+        <div class="win-titlebar" data-win="terminal" style="background:rgba(40,40,50,0.95);">
+            <div class="traffic-lights">
+                <div class="tl tl-close"  onclick="closeWindow('terminal')"></div>
+                <div class="tl tl-min"    onclick="minimizeWindow('terminal')"></div>
+                <div class="tl tl-max"    onclick="maximizeWindow('terminal')"></div>
+            </div>
+            <div class="win-title" style="color:#cdd6f4;">jeremy@macbook — zsh</div>
+            <div style="width:52px"></div>
+        </div>
+        <div class="win-body">
+            <div class="terminal-body" id="terminal-output">
+                <div class="term-line">
+                    <span class="term-output green">Last login: Wed Apr  1 08:00:00 on ttys001</span>
+                </div>
+                <div style="height:6px"></div>
+            </div>
+        </div>
+        <div class="win-resize"></div>
+    </div>
+
+</div>
+
+<!-- ══ DOCK ══ -->
+<div id="dock">
+    <div class="dock-item" onclick="openURL('/')">
+        <div class="dock-icon di-finder">🏠</div>
+        <div class="dock-dot"></div>
+        <div class="dock-label">Home</div>
+    </div>
+    <div class="dock-item" onclick="openWindow('about')">
+        <div class="dock-icon di-about">🧑‍🎤</div>
+        <div class="dock-dot" id="dot-about"></div>
+        <div class="dock-label">About Me</div>
+    </div>
+    <div class="dock-item" onclick="openWindow('projects')">
+        <div class="dock-icon di-projects">💼</div>
+        <div class="dock-dot" id="dot-projects" style="opacity:0"></div>
+        <div class="dock-label">Projects</div>
+    </div>
+    <div class="dock-item" onclick="openWindow('terminal')">
+        <div class="dock-icon di-terminal">🖥️</div>
+        <div class="dock-dot" id="dot-terminal" style="opacity:0"></div>
+        <div class="dock-label">Terminal</div>
+    </div>
+    <div class="dock-sep"></div>
+    <div class="dock-item" onclick="openURL('https://github.com/hejiaji')">
+        <div class="dock-icon di-github">🐙</div>
+        <div class="dock-dot" style="opacity:0"></div>
+        <div class="dock-label">GitHub</div>
+    </div>
+    <div class="dock-item" onclick="openURL('mailto:hejiaji16888@gmail.com')">
+        <div class="dock-icon di-mail">✉️</div>
+        <div class="dock-dot" style="opacity:0"></div>
+        <div class="dock-label">Mail</div>
+    </div>
+    <div class="dock-item" onclick="openURL('/resume/')">
+        <div class="dock-icon di-resume">📄</div>
+        <div class="dock-dot" style="opacity:0"></div>
+        <div class="dock-label">Resume</div>
+    </div>
+</div>
+
+<script>
+    /* ══════════════════════════════════════
+       CLOCK
+    ══════════════════════════════════════ */
+    function updateClock() {
+        const now = new Date();
+        const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        const h = now.getHours(), m = now.getMinutes();
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        const hh = h % 12 || 12;
+        const mm = String(m).padStart(2,'0');
+        document.getElementById('clock').textContent =
+            `${days[now.getDay()]} ${months[now.getMonth()]} ${now.getDate()}  ${hh}:${mm} ${ampm}`;
+    }
+    updateClock();
+    setInterval(updateClock, 10000);
+
+    /* ══════════════════════════════════════
+       Z-INDEX MANAGEMENT
+    ══════════════════════════════════════ */
+    let zTop = 100;
+    const windows = ['about','projects','terminal'];
+
+    function bringToFront(id) {
+        const win = document.getElementById('win-' + id);
+        if (!win) return;
+        win.style.zIndex = ++zTop;
+        // Mark others inactive
+        windows.forEach(w => {
+            const el = document.getElementById('win-' + w);
+            if (el) el.classList.toggle('inactive', w !== id);
+        });
+    }
+
+    /* ══════════════════════════════════════
+       WINDOW OPEN / CLOSE / MINIMIZE / MAX
+    ══════════════════════════════════════ */
+    const winStates = {}; // stores pre-maximize geometry
+
+    function openWindow(id) {
+        const win = document.getElementById('win-' + id);
+        if (!win) return;
+        playSound('open');
+        win.style.display = 'flex';
+        win.classList.remove('minimized');
+        bringToFront(id);
+        const dot = document.getElementById('dot-' + id);
+        if (dot) dot.style.opacity = '1';
+        // Bounce-in animation
+        win.style.transform = 'scale(0.85)';
+        win.style.opacity = '0';
+        win.style.transition = 'transform 0.22s cubic-bezier(0.34,1.56,0.64,1), opacity 0.15s';
+        requestAnimationFrame(() => {
+            win.style.transform = 'scale(1)';
+            win.style.opacity = '1';
+        });
+    }
+
+    function closeWindow(id) {
+        const win = document.getElementById('win-' + id);
+        if (!win) return;
+        playSound('close');
+        win.style.transition = 'transform 0.18s ease-in, opacity 0.18s ease-in';
+        win.style.transform = 'scale(0.8)';
+        win.style.opacity = '0';
+        setTimeout(() => {
+            win.style.display = 'none';
+            win.style.transform = '';
+            win.style.opacity = '';
+        }, 180);
+        const dot = document.getElementById('dot-' + id);
+        if (dot) dot.style.opacity = '0';
+    }
+
+    function minimizeWindow(id) {
+        const win = document.getElementById('win-' + id);
+        if (!win) return;
+        playSound('minimize');
+        win.style.transition = 'transform 0.25s ease-in, opacity 0.25s ease-in';
+        win.style.transform = 'scale(0.6) translateY(60px)';
+        win.style.opacity = '0';
+        setTimeout(() => {
+            win.style.display = 'none';
+            win.style.transform = '';
+            win.style.opacity = '';
+        }, 250);
+    }
+
+    function maximizeWindow(id) {
+        const win = document.getElementById('win-' + id);
+        if (!win) return;
+        playSound('maximize');
+        if (winStates[id]) {
+            // Restore
+            const s = winStates[id];
+            win.style.transition = 'all 0.3s cubic-bezier(0.4,0,0.2,1)';
+            win.style.width  = s.w;
+            win.style.height = s.h;
+            win.style.left   = s.l;
+            win.style.top    = s.t;
+            win.style.borderRadius = '12px';
+            winStates[id] = null;
+        } else {
+            // Save & maximize
+            winStates[id] = { w: win.style.width, h: win.style.height, l: win.style.left, t: win.style.top };
+            win.style.transition = 'all 0.3s cubic-bezier(0.4,0,0.2,1)';
+            win.style.left   = '0';
+            win.style.top    = '28px';
+            win.style.width  = '100vw';
+            win.style.height = 'calc(100vh - 28px - 90px)';
+            win.style.borderRadius = '0';
+        }
+    }
+
+    /* ══════════════════════════════════════
+       DRAGGABLE WINDOWS
+    ══════════════════════════════════════ */
+    document.querySelectorAll('.win-titlebar').forEach(bar => {
+        const id = bar.dataset.win;
+        const win = document.getElementById('win-' + id);
+        let dragging = false, ox = 0, oy = 0;
+
+        bar.addEventListener('mousedown', e => {
+            if (e.target.classList.contains('tl')) return;
+            dragging = true;
+            ox = e.clientX - win.offsetLeft;
+            oy = e.clientY - win.offsetTop;
+            win.style.transition = 'none';
+            bringToFront(id);
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', e => {
+            if (!dragging) return;
+            const x = Math.max(0, Math.min(e.clientX - ox, window.innerWidth  - win.offsetWidth));
+            const y = Math.max(28, Math.min(e.clientY - oy, window.innerHeight - win.offsetHeight - 90));
+            win.style.left = x + 'px';
+            win.style.top  = y + 'px';
+        });
+
+        document.addEventListener('mouseup', () => { dragging = false; });
+
+        // Touch drag
+        bar.addEventListener('touchstart', e => {
+            if (e.target.classList.contains('tl')) return;
+            const t = e.touches[0];
+            dragging = true;
+            ox = t.clientX - win.offsetLeft;
+            oy = t.clientY - win.offsetTop;
+            win.style.transition = 'none';
+            bringToFront(id);
+        }, { passive: true });
+
+        document.addEventListener('touchmove', e => {
+            if (!dragging) return;
+            const t = e.touches[0];
+            const x = Math.max(0, Math.min(t.clientX - ox, window.innerWidth  - win.offsetWidth));
+            const y = Math.max(28, Math.min(t.clientY - oy, window.innerHeight - win.offsetHeight - 90));
+            win.style.left = x + 'px';
+            win.style.top  = y + 'px';
+        }, { passive: true });
+
+        document.addEventListener('touchend', () => { dragging = false; });
+    });
+
+    /* Bring window to front on click */
+    document.querySelectorAll('.window').forEach(win => {
+        win.addEventListener('mousedown', () => bringToFront(win.id.replace('win-','')));
+    });
+
+    /* Click sound on dock items */
+    document.querySelectorAll('.dock-item').forEach(di => {
+        di.addEventListener('click', () => playSound('click'));
+    });
+
+    /* ══════════════════════════════════════
+       RESIZABLE WINDOWS
+    ══════════════════════════════════════ */
+    document.querySelectorAll('.win-resize').forEach(handle => {
+        const win = handle.closest('.window');
+        let resizing = false, sx, sy, sw, sh;
+
+        handle.addEventListener('mousedown', e => {
+            resizing = true;
+            sx = e.clientX; sy = e.clientY;
+            sw = win.offsetWidth; sh = win.offsetHeight;
+            win.style.transition = 'none';
+            e.stopPropagation(); e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', e => {
+            if (!resizing) return;
+            win.style.width  = Math.max(280, sw + e.clientX - sx) + 'px';
+            win.style.height = Math.max(180, sh + e.clientY - sy) + 'px';
+        });
+
+        document.addEventListener('mouseup', () => { resizing = false; });
+    });
+
+    /* ══════════════════════════════════════
+       SIDEBAR PANE SWITCHING
+    ══════════════════════════════════════ */
+    function showPane(win, pane) {
+        // Hide all panes in this window
+        document.querySelectorAll(`[id^="pane-${win}-"]`).forEach(p => p.style.display = 'none');
+        document.getElementById(`pane-${win}-${pane}`).style.display = 'block';
+        // Update active sidebar item
+        const winEl = document.getElementById('win-' + win);
+        winEl.querySelectorAll('.sidebar-item').forEach(item => {
+            item.classList.remove('active');
+            if (item.textContent.trim().toLowerCase().includes(pane)) item.classList.add('active');
+        });
+    }
+
+    /* ══════════════════════════════════════
+       TERMINAL
+    ══════════════════════════════════════ */
+    const termOutput = document.getElementById('terminal-output');
+    const COMMANDS = {
+        help: () => [
+            {cls:'green', text:'Available commands:'},
+            {cls:'blue',  text:'  whoami     — About Jeremy'},
+            {cls:'blue',  text:'  skills     — Tech stack'},
+            {cls:'blue',  text:'  experience — Work history'},
+            {cls:'blue',  text:'  contact    — Get in touch'},
+            {cls:'blue',  text:'  open about — Open About window'},
+            {cls:'blue',  text:'  open projects — Open Projects window'},
+            {cls:'blue',  text:'  clear      — Clear terminal'},
+            {cls:'blue',  text:'  date       — Current date'},
+        ],
+        whoami: () => [
+            {cls:'', text:'Jeremy He'},
+            {cls:'dim', text:'Full-stack Developer · Sydney, Australia 🇦🇺'},
+            {cls:'dim', text:'Currently @ Atlassian'},
+        ],
+        skills: () => [
+            {cls:'mauve', text:'Frontend:  '},
+            {cls:'', text:'  React · TypeScript · Next.js · CSS'},
+            {cls:'mauve', text:'Backend:   '},
+            {cls:'', text:'  Node.js · Go · GraphQL · REST'},
+            {cls:'mauve', text:'Infra:     '},
+            {cls:'', text:'  AWS · Docker · Kubernetes · CI/CD'},
+        ],
+        experience: () => [
+            {cls:'yellow', text:'🟠 Atlassian      — Senior Engineer     · 2021–Present'},
+            {cls:'yellow', text:'🛡️  SafetyCulture   — Senior Engineer     · 2018–2021'},
+            {cls:'yellow', text:'🔷 ThoughtWorks   — Full-stack Dev      · 2016–2018'},
+            {cls:'yellow', text:'🏢 Nagarro        — Developer           · 2014–2016'},
+            {cls:'yellow', text:'🏢 Pactera        — Developer           · 2012–2014'},
+        ],
+        contact: () => [
+            {cls:'green', text:'📧  hejiaji16888@gmail.com'},
+            {cls:'blue',  text:'🐙  github.com/hejiaji'},
+            {cls:'blue',  text:'💼  linkedin.com/in/hejiaji'},
+            {cls:'blue',  text:'🌐  hejiaji.cn'},
+        ],
+        date: () => [{cls:'', text: new Date().toString()}],
+        'open about':    () => { openWindow('about');    return [{cls:'green', text:'Opening About Me…'}]; },
+        'open projects': () => { openWindow('projects'); return [{cls:'green', text:'Opening Projects…'}]; },
+    };
+
+    function addTermLine(html, cls) {
+        const div = document.createElement('div');
+        div.className = 'term-output' + (cls ? ' ' + cls : '');
+        div.textContent = html;
+        termOutput.appendChild(div);
+    }
+
+    function addTermPrompt(cmd) {
+        const row = document.createElement('div');
+        row.className = 'term-line';
+        row.innerHTML = `<span class="term-prompt">jeremy@macbook ~ %</span><span class="term-cmd"> ${cmd}</span>`;
+        termOutput.appendChild(row);
+    }
+
+    function runCommand(raw) {
+        const cmd = raw.trim().toLowerCase();
+        if (!cmd) return;
+        addTermPrompt(raw.trim());
+        if (cmd === 'clear') {
+            termOutput.innerHTML = '';
+            return;
+        }
+        const fn = COMMANDS[cmd];
+        if (fn) {
+            fn().forEach(l => addTermLine(l.text, l.cls));
+        } else {
+            addTermLine(`zsh: command not found: ${cmd}`, 'pink');
+            addTermLine('Type "help" to see available commands.', 'dim');
+        }
+        termOutput.scrollTop = termOutput.scrollHeight;
+    }
+
+    // Build the terminal input row
+    function buildTerminalInput() {
+        const row = document.createElement('div');
+        row.className = 'term-input-row';
+        row.id = 'term-input-row';
+        row.innerHTML = `<span class="term-prompt">jeremy@macbook ~ %</span>
+            <input class="term-input" id="term-input" type="text" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="type a command…">`;
+        termOutput.appendChild(row);
+
+        const input = document.getElementById('term-input');
+        let history = [], hIdx = -1;
+
+        input.addEventListener('keydown', e => {
+            if (e.key === 'Enter') {
+                const val = input.value;
+                history.unshift(val); hIdx = -1;
+                input.value = '';
+                // Move input row to end
+                termOutput.removeChild(row);
+                runCommand(val);
+                termOutput.appendChild(row);
+                termOutput.scrollTop = termOutput.scrollHeight;
+                input.focus();
+            } else if (e.key === 'ArrowUp') {
+                hIdx = Math.min(hIdx + 1, history.length - 1);
+                input.value = history[hIdx] || '';
+                e.preventDefault();
+            } else if (e.key === 'ArrowDown') {
+                hIdx = Math.max(hIdx - 1, -1);
+                input.value = hIdx >= 0 ? history[hIdx] : '';
+                e.preventDefault();
+            }
+        });
+    }
+
+    // Auto-type welcome message then show input
+    function termWelcome() {
+        const lines = [
+            {cls:'mauve', text:'  ____                               _   _      '},
+            {cls:'mauve', text:' |  _ \\ ___ _ __ ___ _ __ ___  _   | | | | ___ '},
+            {cls:'mauve', text:' | |_) / _ \\\\ \'__/ _ \\ \'_ ` _ \\| | | |_| |/ _ \\'},
+            {cls:'mauve', text:' |  _ <  __/ | |  __/ | | | | | |_|  _  |  __/'},
+            {cls:'mauve', text:' |_| \\_\\___|_|  \\___|_| |_| |_|\\__, |_| |_|\\___|'},
+            {cls:'mauve', text:'                                 |___/            '},
+            {cls:'', text:''},
+            {cls:'green', text:'Welcome to Jeremy\'s Terminal — type "help" to get started.'},
+            {cls:'dim', text:''},
+        ];
+        let i = 0;
+        function next() {
+            if (i >= lines.length) { buildTerminalInput(); return; }
+            addTermLine(lines[i].text, lines[i].cls);
+            i++;
+            termOutput.scrollTop = termOutput.scrollHeight;
+            setTimeout(next, 28);
+        }
+        next();
+    }
+
+    /* ══════════════════════════════════════
+       UTILS
+    ══════════════════════════════════════ */
+    function openURL(url) { window.open(url, url.startsWith('http') ? '_blank' : '_self'); }
+
+    /* ══════════════════════════════════════
+       MENU BAR DROPDOWNS
+    ══════════════════════════════════════ */
+    const menuIds = ['apple','finder','file','edit','view','go','window','help'];
+
+    function closeMenus() {
+        menuIds.forEach(id => {
+            document.getElementById('md-' + id)?.classList.remove('open');
+            document.getElementById('mp-' + id)?.classList.remove('active');
+        });
+    }
+
+    function toggleMenu(id, e) {
+        e.stopPropagation();
+        playSound('click');
+        const isOpen = document.getElementById('md-' + id).classList.contains('open');
+        closeMenus();
+        if (!isOpen) {
+            document.getElementById('md-' + id).classList.add('open');
+            document.getElementById('mp-' + id).classList.add('active');
+        }
+    }
+
+    // Close on outside click
+    document.addEventListener('click', e => {
+        if (!e.target.closest('.menu-parent')) closeMenus();
+    });
+
+    // Hover to switch when any menu is open
+    menuIds.forEach(id => {
+        const mp = document.getElementById('mp-' + id);
+        if (mp) mp.addEventListener('mouseenter', () => {
+            const anyOpen = menuIds.some(i => document.getElementById('md-' + i)?.classList.contains('open'));
+            if (anyOpen) {
+                closeMenus();
+                document.getElementById('md-' + id).classList.add('open');
+                document.getElementById('mp-' + id).classList.add('active');
+            }
+        });
+    });
+
+    /* ══════════════════════════════════════
+       INIT TERMINAL TRIGGER (dock + desktop icon)
+    ══════════════════════════════════════ */
+    function openTerminal() {
+        openWindow('terminal');
+        if (!document.getElementById('term-input')) {
+            setTimeout(termWelcome, 300);
+        }
+    }
+
+    // Wire up all dock/desktop terminal openers
+    document.querySelectorAll('.dock-item').forEach(di => {
+        const lbl = di.querySelector('.dock-label');
+        if (lbl && lbl.textContent.trim() === 'Terminal') {
+            di.setAttribute('onclick', '');
+            di.addEventListener('click', openTerminal);
+        }
+    });
+
+    document.querySelectorAll('.desktop-icon').forEach(di => {
+        if (di.getAttribute('ondblclick') === "openWindow('terminal')") {
+            di.setAttribute('ondblclick', '');
+            di.addEventListener('dblclick', openTerminal);
+        }
+    });
+
+    // Click on terminal window body focuses input
+    document.getElementById('win-terminal').addEventListener('click', () => {
+        const inp = document.getElementById('term-input');
+        if (inp) inp.focus();
+    });
+
+    /* ══════════════════════════════════════
+       SOUND ENGINE (Web Audio API — no files)
+    ══════════════════════════════════════ */
+    let audioCtx = null;
+
+    function getAudio() {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        return audioCtx;
+    }
+
+    function playSound(type) {
+        try {
+            const ctx = getAudio();
+
+            const sounds = {
+                // Window open: short rising chord
+                open: (ctx) => {
+                    [440, 554, 660].forEach((freq, i) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.04);
+                        gain.gain.setValueAtTime(0, ctx.currentTime + i * 0.04);
+                        gain.gain.linearRampToValueAtTime(0.08, ctx.currentTime + i * 0.04 + 0.01);
+                        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.04 + 0.25);
+                        osc.connect(gain); gain.connect(ctx.destination);
+                        osc.start(ctx.currentTime + i * 0.04);
+                        osc.stop(ctx.currentTime + i * 0.04 + 0.3);
+                    });
+                },
+                // Window close: short descending pop
+                close: (ctx) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(440, ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(220, ctx.currentTime + 0.12);
+                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+                    osc.connect(gain); gain.connect(ctx.destination);
+                    osc.start(); osc.stop(ctx.currentTime + 0.18);
+                },
+                // Click: subtle tick
+                click: (ctx) => {
+                    const buf = ctx.createBuffer(1, ctx.sampleRate * 0.04, ctx.sampleRate);
+                    const data = buf.getChannelData(0);
+                    for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.005));
+                    const src = ctx.createBufferSource();
+                    const gain = ctx.createGain();
+                    const filter = ctx.createBiquadFilter();
+                    filter.type = 'highpass'; filter.frequency.value = 3000;
+                    src.buffer = buf;
+                    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+                    src.connect(filter); filter.connect(gain); gain.connect(ctx.destination);
+                    src.start();
+                },
+                // Notification: gentle two-tone ding
+                notif: (ctx) => {
+                    [880, 1109].forEach((freq, i) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'sine';
+                        osc.frequency.value = freq;
+                        gain.gain.setValueAtTime(0, ctx.currentTime + i * 0.13);
+                        gain.gain.linearRampToValueAtTime(0.09, ctx.currentTime + i * 0.13 + 0.01);
+                        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.13 + 0.5);
+                        osc.connect(gain); gain.connect(ctx.destination);
+                        osc.start(ctx.currentTime + i * 0.13);
+                        osc.stop(ctx.currentTime + i * 0.13 + 0.55);
+                    });
+                },
+                // Spotlight open: soft whoosh
+                spotlight: (ctx) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    const filter = ctx.createBiquadFilter();
+                    filter.type = 'bandpass'; filter.frequency.value = 800; filter.Q.value = 0.5;
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(300, ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(600, ctx.currentTime + 0.1);
+                    gain.gain.setValueAtTime(0.06, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.18);
+                    osc.connect(filter); filter.connect(gain); gain.connect(ctx.destination);
+                    osc.start(); osc.stop(ctx.currentTime + 0.2);
+                },
+                // Minimize: swipe-down whoosh
+                minimize: (ctx) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(600, ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.22);
+                    gain.gain.setValueAtTime(0.07, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+                    osc.connect(gain); gain.connect(ctx.destination);
+                    osc.start(); osc.stop(ctx.currentTime + 0.28);
+                },
+                // Maximize: rising whoosh
+                maximize: (ctx) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(200, ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(700, ctx.currentTime + 0.2);
+                    gain.gain.setValueAtTime(0.07, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.22);
+                    osc.connect(gain); gain.connect(ctx.destination);
+                    osc.start(); osc.stop(ctx.currentTime + 0.25);
+                },
+                // Wallpaper: magical shimmer
+                wallpaper: (ctx) => {
+                    [523, 659, 784, 1047].forEach((freq, i) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'sine';
+                        osc.frequency.value = freq;
+                        gain.gain.setValueAtTime(0, ctx.currentTime + i * 0.06);
+                        gain.gain.linearRampToValueAtTime(0.06, ctx.currentTime + i * 0.06 + 0.02);
+                        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.06 + 0.35);
+                        osc.connect(gain); gain.connect(ctx.destination);
+                        osc.start(ctx.currentTime + i * 0.06);
+                        osc.stop(ctx.currentTime + i * 0.06 + 0.4);
+                    });
+                },
+            };
+
+            if (sounds[type]) sounds[type](ctx);
+        } catch(e) { /* silent fail if AudioContext blocked */ }
+    }
+
+    /* ══════════════════════════════════════
+       ANIME WALLPAPER
+    ══════════════════════════════════════ */
+    const animeWallpapers = [
+        'https://images.unsplash.com/photo-1578632292335-df3abbb0d586?w=1920&q=80', // anime city night
+        'https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=1920&q=80', // abstract colorful
+        'https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?w=1920&q=80', // japan night
+        'https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=1920&q=80', // japan street
+        'https://images.unsplash.com/photo-1480796927426-f609979314bd?w=1920&q=80', // tokyo night
+        'https://images.unsplash.com/photo-1513407030348-c983a97b98d8?w=1920&q=80', // japanese lanterns
+        'https://images.unsplash.com/photo-1490806843957-31f4c9a91c65?w=1920&q=80', // cherry blossom
+        'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1920&q=80', // neon city rain
+    ];
+    const wall = animeWallpapers[Math.floor(Math.random() * animeWallpapers.length)];
+    const img = new Image();
+    img.onload = () => {
+        document.getElementById('desktop').style.backgroundImage = `url('${wall}')`;
+        document.getElementById('desktop').style.backgroundSize = 'cover';
+        document.getElementById('desktop').style.backgroundPosition = 'center';
+        // Keep gradient overlay on top of image
+        document.getElementById('desktop').style.cssText +=
+            `background-image: linear-gradient(rgba(0,0,0,0.15),rgba(0,0,0,0.15)), url('${wall}');`;
+    };
+    img.src = wall;
+
+    /* ══════════════════════════════════════
+       NOTIFICATIONS
+    ══════════════════════════════════════ */
+    function showNotif({ app = 'System', icon = '💻', title, body, duration = 5000 }) {
+        playSound('notif');
+        const container = document.getElementById('notif-container');
+        const el = document.createElement('div');
+        el.className = 'notif';
+        el.innerHTML = `
+            <div class="notif-icon" style="background:rgba(0,0,0,0.06)">${icon}</div>
+            <div class="notif-content">
+                <div class="notif-app">${app}</div>
+                <div class="notif-title">${title}</div>
+                ${body ? `<div class="notif-body">${body}</div>` : ''}
+            </div>
+            <div class="notif-close" onclick="dismissNotif(this.parentElement)">✕</div>
+        `;
+        container.appendChild(el);
+        requestAnimationFrame(() => { requestAnimationFrame(() => el.classList.add('show')); });
+        if (duration > 0) setTimeout(() => dismissNotif(el), duration);
+    }
+
+    function dismissNotif(el) {
+        el.classList.add('hide');
+        el.classList.remove('show');
+        setTimeout(() => el.remove(), 300);
+    }
+
+    /* ══════════════════════════════════════
+       SPOTLIGHT
+    ══════════════════════════════════════ */
+    const SPOTLIGHT_ITEMS = [
+        { icon: '🧑‍🎤', title: 'About Me',   sub: 'Window',   bg: '#81c784', action: () => openWindow('about') },
+        { icon: '💼', title: 'Projects',   sub: 'Window',   bg: '#ba68c8', action: () => openWindow('projects') },
+        { icon: '🖥️', title: 'Terminal',   sub: 'Window',   bg: '#455a64', action: () => openTerminal() },
+        { icon: '📄', title: 'Resume',     sub: 'Page',     bg: '#ff8a65', action: () => openURL('/resume/') },
+        { icon: '🏠', title: 'Home',       sub: 'Page',     bg: '#4fc3f7', action: () => openURL('/') },
+        { icon: '🐙', title: 'GitHub',     sub: 'github.com/hejiaji', bg: '#616161', action: () => openURL('https://github.com/hejiaji') },
+        { icon: '💼', title: 'LinkedIn',   sub: 'linkedin.com/in/hejiaji', bg: '#1976d2', action: () => openURL('https://www.linkedin.com/in/hejiaji/') },
+        { icon: '✉️', title: 'Email',      sub: 'hejiaji16888@gmail.com', bg: '#42a5f5', action: () => openURL('mailto:hejiaji16888@gmail.com') },
+        { icon: '⚡', title: 'Skills',     sub: 'About Me · Skills', bg: '#f9a825', action: () => { openWindow('about'); setTimeout(() => showPane('about','skills'), 300); } },
+        { icon: '💼', title: 'Experience', sub: 'About Me · Experience', bg: '#e64a19', action: () => { openWindow('about'); setTimeout(() => showPane('about','experience'), 300); } },
+        { icon: '🖼️', title: 'New Wallpaper', sub: 'Change anime wallpaper', bg: '#7b1fa2', action: () => changeWallpaper() },
+    ];
+
+    let spSelected = -1;
+
+    function openSpotlight() {
+        playSound('spotlight');
+        document.getElementById('spotlight-overlay').classList.add('open');
+        setTimeout(() => document.getElementById('spotlight-input').focus(), 50);
+        renderSpotlight('');
+        spSelected = -1;
+    }
+
+    function closeSpotlight(e) {
+        if (e && e.target !== document.getElementById('spotlight-overlay')) return;
+        document.getElementById('spotlight-overlay').classList.remove('open');
+        document.getElementById('spotlight-input').value = '';
+    }
+
+    function closeSpotlightDirect() {
+        document.getElementById('spotlight-overlay').classList.remove('open');
+        document.getElementById('spotlight-input').value = '';
+    }
+
+    function renderSpotlight(query) {
+        const results = document.getElementById('spotlight-results');
+        const q = query.trim().toLowerCase();
+        const filtered = q
+            ? SPOTLIGHT_ITEMS.filter(i => i.title.toLowerCase().includes(q) || i.sub.toLowerCase().includes(q))
+            : SPOTLIGHT_ITEMS;
+
+        if (!filtered.length) {
+            results.innerHTML = `<div id="spotlight-empty">No results for "<strong>${query}</strong>"</div>`;
+            return;
+        }
+
+        results.innerHTML = `<div class="sp-section-title">${q ? 'Results' : 'Suggestions'}</div>` +
+            filtered.map((item, i) => `
+                <div class="sp-result${i === spSelected ? ' selected' : ''}" data-idx="${i}" onclick="spActivate(${i})">
+                    <div class="sp-icon" style="background:${item.bg}20;color:${item.bg}">${item.icon}</div>
+                    <div class="sp-info">
+                        <div class="sp-title">${item.title}</div>
+                        <div class="sp-sub">${item.sub}</div>
+                    </div>
+                </div>`).join('');
+    }
+
+    function spActivate(idx) {
+        const q = document.getElementById('spotlight-input').value.trim().toLowerCase();
+        const filtered = q
+            ? SPOTLIGHT_ITEMS.filter(i => i.title.toLowerCase().includes(q) || i.sub.toLowerCase().includes(q))
+            : SPOTLIGHT_ITEMS;
+        if (filtered[idx]) { filtered[idx].action(); closeSpotlightDirect(); }
+    }
+
+    document.getElementById('spotlight-input').addEventListener('input', e => {
+        spSelected = -1;
+        renderSpotlight(e.target.value);
+    });
+
+    document.getElementById('spotlight-input').addEventListener('keydown', e => {
+        const q = document.getElementById('spotlight-input').value.trim().toLowerCase();
+        const filtered = q ? SPOTLIGHT_ITEMS.filter(i => i.title.toLowerCase().includes(q) || i.sub.toLowerCase().includes(q)) : SPOTLIGHT_ITEMS;
+        if (e.key === 'ArrowDown') { spSelected = Math.min(spSelected + 1, filtered.length - 1); renderSpotlight(document.getElementById('spotlight-input').value); e.preventDefault(); }
+        else if (e.key === 'ArrowUp') { spSelected = Math.max(spSelected - 1, 0); renderSpotlight(document.getElementById('spotlight-input').value); e.preventDefault(); }
+        else if (e.key === 'Enter') { spActivate(spSelected >= 0 ? spSelected : 0); }
+        else if (e.key === 'Escape') { closeSpotlightDirect(); }
+    });
+
+    // ⌘K / ⌘Space to open spotlight
+    document.addEventListener('keydown', e => {
+        if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === ' ')) {
+            e.preventDefault();
+            const overlay = document.getElementById('spotlight-overlay');
+            overlay.classList.contains('open') ? closeSpotlightDirect() : openSpotlight();
+        }
+        if (e.key === 'Escape') closeSpotlightDirect();
+    });
+
+    /* ══════════════════════════════════════
+       WALLPAPER CHANGE
+    ══════════════════════════════════════ */
+    function changeWallpaper() {
+        playSound('wallpaper');
+        const current = document.getElementById('desktop').style.backgroundImage;
+        let next;
+        do { next = animeWallpapers[Math.floor(Math.random() * animeWallpapers.length)]; }
+        while (current.includes(next) && animeWallpapers.length > 1);
+        const desktop = document.getElementById('desktop');
+        desktop.style.transition = 'opacity 0.4s';
+        desktop.style.opacity = '0.4';
+        const img = new Image();
+        img.onload = () => {
+            desktop.style.cssText += `background-image: linear-gradient(rgba(0,0,0,0.15),rgba(0,0,0,0.15)), url('${next}'); background-size:cover; background-position:center;`;
+            desktop.style.opacity = '1';
+        };
+        img.src = next;
+        showNotif({ app: 'Desktop', icon: '🖼️', title: 'Wallpaper changed', body: 'New anime wallpaper loaded!' });
+    }
+
+    /* ══════════════════════════════════════
+       INIT — open terminal on load + welcome notifications
+    ══════════════════════════════════════ */
+    setTimeout(openTerminal, 200);
+    setTimeout(() => showNotif({ app: 'Finder', icon: '👋', title: 'Welcome, Jeremy!', body: 'Double-click desktop icons or use the dock.' }), 1500);
+    setTimeout(() => showNotif({ app: 'Tip', icon: '💡', title: 'Try Spotlight', body: 'Press ⌘K or click 🔍 to search.' }), 3500);
+
+</script>
+</body>
+</html>
