@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Jeremy He — 2026 Goals">
+    <link rel="shortcut icon" href="/img/favicon.ico">
+    <title>2026 Goals · Jeremy He</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Controls -->
+<div class="controls">
+    <div class="controls-left">
+        <a href="/" class="ctrl-btn" title="Home">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/>
+            </svg>
+            <span data-en="Home" data-zh="首页">Home</span>
+        </a>
+    </div>
+    <div class="controls-right">
+        <button class="sync-pill dot" id="syncBtn" onclick="openSyncModal()" title="Cloud sync">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17.5 19a4.5 4.5 0 1 0 0-9h-1.05A7.5 7.5 0 1 0 5 17.5"/>
+            </svg>
+            <span id="syncLabel" data-en="Sync off" data-zh="未同步">Sync off</span>
+        </button>
+        <button class="ctrl-btn" id="langBtn" onclick="toggleLang()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+            </svg>
+            <span id="langLabel">中文</span>
+        </button>
+        <button class="ctrl-btn" id="themeBtn" onclick="toggleTheme()">
+            <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>
+            <span id="themeLabel">Dark</span>
+        </button>
+    </div>
+</div>
+
+<main>
+
+    <header class="page-header">
+        <div class="page-header-text">
+            <h1 data-en="2026 Goals" data-zh="2026 目标">2026 Goals</h1>
+            <p class="tagline" data-en="Small steps, every day." data-zh="日拱一卒，功不唐捐。">Small steps, every day.</p>
+        </div>
+        <div class="ring" id="ring" style="--p: 0;">
+            <span id="ringPct">0%</span>
+        </div>
+    </header>
+
+    <!-- Year overview -->
+    <div class="overview">
+        <div class="overview-row">
+            <span class="overview-label" data-en="Year progress" data-zh="年度进度">Year progress</span>
+            <span class="overview-value">
+                <span id="dayOfYear">0</span> / <span id="totalDays">365</span>
+                <span class="overview-unit" data-en="days" data-zh="天">days</span>
+                <span class="overview-pill"><span id="yearPct">0</span>%</span>
+            </span>
+        </div>
+        <div class="overview-bar"><span id="yearBar" style="width:0%"></span></div>
+    </div>
+
+    <!-- Goal cards (rendered by JS) -->
+    <section class="goal-stack" id="goalStack"></section>
+
+    <!-- Reset -->
+    <section class="reset-row">
+        <button class="ctrl-btn ghost" onclick="resetProgress()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="1 4 1 10 7 10"/>
+                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+            </svg>
+            <span data-en="Reset all progress" data-zh="重置全部进度">Reset all progress</span>
+        </button>
+    </section>
+
+</main>
+
+<footer>
+    &copy; <span id="yr"></span> Jeremy He &nbsp;·&nbsp; Sydney, Australia
+</footer>
+
+<!-- ── Sync settings modal (status + manual pull/push only) ── -->
+<div class="modal-overlay" id="syncModal" onclick="if(event.target===this) closeSyncModal()">
+    <div class="modal" role="dialog" aria-labelledby="syncModalTitle">
+        <div class="modal-head">
+            <h3 id="syncModalTitle" data-en="Cloud sync" data-zh="云端同步">Cloud sync</h3>
+            <button class="modal-close" onclick="closeSyncModal()" aria-label="Close">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+        </div>
+
+        <p class="lede" data-en="Goal data is synced via a preconfigured private GitHub Gist. Pulls happen on page load; push manually after making changes (password required)."
+           data-zh="目标数据通过预配置的私有 GitHub Gist 同步。打开页面时自动拉取；修改后请手动推送（需要密码）。">
+            Goal data is synced via a preconfigured private GitHub Gist. Pulls happen on page load; push manually after making changes (password required).
+        </p>
+
+        <div class="modal-status" id="syncStatusBox">
+            <span class="dot"></span>
+            <span id="syncStatusText" data-en="Idle" data-zh="待命">Idle</span>
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn" id="syncPullBtn" onclick="syncPullNow()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 5v14"/><path d="M19 12l-7 7-7-7"/>
+                </svg>
+                <span data-en="Pull" data-zh="拉取">Pull</span>
+            </button>
+            <button class="btn primary" id="syncPushBtn" onclick="syncPushNow()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 19V5"/><path d="M5 12l7-7 7 7"/>
+                </svg>
+                <span data-en="Push" data-zh="推送">Push</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script src="sync.js"></script>
+<script src="app.js"></script>
+
+</body>
+</html>
