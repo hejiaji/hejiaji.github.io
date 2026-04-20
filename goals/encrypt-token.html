@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Encrypt token for goals/sync.js</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; max-width: 640px; margin: 40px auto; padding: 0 20px; line-height: 1.5; color: #1a1a1a; }
+        h1 { font-size: 1.3rem; }
+        h2 { font-size: 1rem; margin-top: 24px; }
+        label { display: block; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; color: #666; margin: 14px 0 4px; letter-spacing: 0.05em; }
+        input, textarea { width: 100%; padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; font: inherit; font-family: ui-monospace, monospace; font-size: 0.85rem; box-sizing: border-box; }
+        textarea { resize: vertical; min-height: 80px; word-break: break-all; }
+        button { background: #2563eb; color: #fff; border: none; padding: 10px 18px; border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 12px; font-family: inherit; }
+        button:hover { background: #1d4ed8; }
+        .warn { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 12px 14px; margin: 16px 0; font-size: 0.88rem; border-radius: 4px; }
+        .ok { background: #d1fae5; border-left: 4px solid #10b981; padding: 12px 14px; margin: 16px 0; font-size: 0.88rem; border-radius: 4px; }
+        code { background: #f3f4f6; padding: 1px 5px; border-radius: 3px; font-size: 0.85em; }
+        ol li { margin-bottom: 6px; }
+    </style>
+</head>
+<body>
+    <h1>🔐 Encrypt your GitHub token</h1>
+    <p>This tool runs <strong>entirely in your browser</strong> — your token and password never leave this page. Open the file directly with <code>file://</code> or <code>http://localhost</code>.</p>
+
+    <div class="warn">
+        ⚠️ <strong>Do not deploy this file</strong> to <code>hejiaji.cn</code>. Use it locally only. After running it, delete or move <code>encrypt-token.html</code> out of the <code>goals/</code> folder.
+    </div>
+
+    <h2>Step 1 — Encrypt</h2>
+
+    <label>GitHub Personal Access Token</label>
+    <input type="password" id="token" placeholder="github_pat_…" autocomplete="off">
+
+    <label>Unlock password (you'll type this on every page load)</label>
+    <input type="password" id="password" placeholder="something memorable" autocomplete="off">
+
+    <button onclick="encrypt()">Encrypt</button>
+
+    <h2>Step 2 — Paste this into <code>goals/sync.js</code></h2>
+    <label>ENCRYPTED_TOKEN value (replace the constant in sync.js)</label>
+    <textarea id="output" readonly placeholder="(encrypted blob will appear here)"></textarea>
+
+    <h2>Step 3 — Verify (optional)</h2>
+    <p>Paste the encrypted blob and your password to confirm decryption works:</p>
+    <label>Encrypted blob</label>
+    <textarea id="verifyBlob" placeholder="paste blob"></textarea>
+    <label>Password</label>
+    <input type="password" id="verifyPwd" placeholder="password" autocomplete="off">
+    <button onclick="verify()">Decrypt</button>
+    <div id="verifyResult" style="margin-top: 12px; font-family: ui-monospace, monospace; font-size: 0.85rem;"></div>
+
+    <script>
+        // ── WebCrypto helpers (must match goals/sync.js) ──
+        const PBKDF2_ITER = 210000;
+        const SALT_BYTES  = 16;
+        const IV_BYTES    = 12;
+
+        const enc = new TextEncoder();
+        const dec = new TextDecoder();
+
+        function b64(buf) {
+            return btoa(String.fromCharCode(...new Uint8Array(buf)));
+        }
+        function b64dec(s) {
+            const bin = atob(s);
+            const u = new Uint8Array(bin.length);
+            for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+            return u;
+        }
+        async function deriveKey(password, salt) {
+            const baseKey = await crypto.subtle.importKey(
+                'raw', enc.encode(password), { name: 'PBKDF2' }, false, ['deriveKey']
+            );
+            return crypto.subtle.deriveKey(
+                { name: 'PBKDF2', salt, iterations: PBKDF2_ITER, hash: 'SHA-256' },
+                baseKey,
+                { name: 'AES-GCM', length: 256 },
+                false,
+                ['encrypt', 'decrypt']
+            );
+        }
+
+        async function encrypt() {
+            const token = document.getElementById('token').value;
+            const pwd   = document.getElementById('password').value;
+            if (!token || !pwd) { alert('Both fields required'); return; }
+            const salt = crypto.getRandomValues(new Uint8Array(SALT_BYTES));
+            const iv   = crypto.getRandomValues(new Uint8Array(IV_BYTES));
+            const key  = await deriveKey(pwd, salt);
+            const ct   = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(token));
+            // Pack salt | iv | ciphertext into one Base64 string
+            const packed = new Uint8Array(salt.length + iv.length + ct.byteLength);
+            packed.set(salt, 0);
+            packed.set(iv, salt.length);
+            packed.set(new Uint8Array(ct), salt.length + iv.length);
+            document.getElementById('output').value = b64(packed);
+        }
+
+        async function verify() {
+            const blob = document.getElementById('verifyBlob').value.trim();
+            const pwd  = document.getElementById('verifyPwd').value;
+            const out  = document.getElementById('verifyResult');
+            if (!blob || !pwd) { out.textContent = '❌ Need both fields'; return; }
+            try {
+                const packed = b64dec(blob);
+                const salt = packed.slice(0, SALT_BYTES);
+                const iv   = packed.slice(SALT_BYTES, SALT_BYTES + IV_BYTES);
+                const ct   = packed.slice(SALT_BYTES + IV_BYTES);
+                const key  = await deriveKey(pwd, salt);
+                const pt   = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ct);
+                const tok  = dec.decode(pt);
+                out.innerHTML = `✅ <strong>Decrypted OK.</strong> Token starts with <code>${tok.slice(0, 12)}…</code> (length ${tok.length})`;
+            } catch (e) {
+                out.innerHTML = `❌ <strong>Decryption failed</strong> (wrong password or corrupted blob): ${e.message}`;
+            }
+        }
+    </script>
+</body>
+</html>

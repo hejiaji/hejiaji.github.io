@@ -515,8 +515,10 @@ window.resetProgress = resetProgress;
 
 const SYNC_T = {
     en: {
-        notConfigured: 'Sync disabled (placeholders not replaced in sync.js)',
-        idle:          'Idle',
+        notConfigured: 'Sync disabled (encrypted token not configured)',
+        locked:        'Locked',
+        idle:          'Unlocked',
+        unlocking:     'Unlocking…',
         pulling:       'Pulling…',
         pushing:       'Pushing…',
         pulledOk:      'Pulled · ',
@@ -524,16 +526,20 @@ const SYNC_T = {
         pushedOk:      'Pushed · ',
         error:         'Error: ',
         pillOff:       'Sync off',
+        pillLocked:    '🔒 Locked',
         pillReady:     'Synced',
         pillBusy:      'Syncing…',
         pillError:     'Sync error',
         replaceLocal:  'Replace local data with the cloud copy?',
-        passwordPrompt: 'Enter push password:',
-        passwordWrong:  'Wrong password — push cancelled.'
+        unlockPrompt:  'Enter unlock password:',
+        unlockWrong:   'Wrong password — try again.',
+        unlockedOk:    'Unlocked'
     },
     zh: {
-        notConfigured: '同步已禁用（sync.js 中占位符未替换）',
-        idle:          '待命',
+        notConfigured: '同步已禁用（未配置加密令牌）',
+        locked:        '已锁定',
+        idle:          '已解锁',
+        unlocking:     '解锁中…',
         pulling:       '拉取中…',
         pushing:       '推送中…',
         pulledOk:      '拉取成功 · ',
@@ -541,12 +547,14 @@ const SYNC_T = {
         pushedOk:      '推送成功 · ',
         error:         '错误：',
         pillOff:       '未同步',
+        pillLocked:    '🔒 已锁定',
         pillReady:     '已同步',
         pillBusy:      '同步中…',
         pillError:     '同步错误',
         replaceLocal:  '使用云端数据覆盖本地数据？',
-        passwordPrompt: '请输入推送密码：',
-        passwordWrong:  '密码错误，推送已取消。'
+        unlockPrompt:  '请输入解锁密码：',
+        unlockWrong:   '密码错误，请重试。',
+        unlockedOk:    '已解锁'
     }
 };
 const st = key => SYNC_T[lang][key];
@@ -578,9 +586,12 @@ function setPill(state, text) {
 }
 
 function refreshPill() {
-    const cfg = GoalsSync.getConfig();
-    if (!cfg) {
+    if (!GoalsSync.hasEncryptedToken()) {
         setPill(null, st('pillOff'));
+        return;
+    }
+    if (!GoalsSync.isUnlocked()) {
+        setPill(null, st('pillLocked'));
         return;
     }
     if (lastError) {
@@ -601,8 +612,8 @@ function setStatusBox(state, text) {
 }
 
 function refreshStatusBox() {
-    const cfg = GoalsSync.getConfig();
-    if (!cfg) return setStatusBox(null, st('notConfigured'));
+    if (!GoalsSync.hasEncryptedToken()) return setStatusBox(null, st('notConfigured'));
+    if (!GoalsSync.isUnlocked()) return setStatusBox(null, st('locked'));
     if (lastError) return setStatusBox('error', st('error') + lastError);
     if (lastSyncedAt) {
         setStatusBox('ok', fmtAgo(lastSyncedAt));
@@ -619,11 +630,53 @@ function closeSyncModal() {
     syncModal.classList.remove('open');
 }
 
+/** Prompt for unlock password until correct, or user cancels. Returns true on success. */
+async function ensureUnlocked() {
+    if (!GoalsSync.hasEncryptedToken()) return false;
+    if (GoalsSync.isUnlocked()) return true;
+    while (true) {
+        const pwd = window.prompt(st('unlockPrompt'));
+        if (pwd === null) return false; // cancelled
+        try {
+            setStatusBox('busy', st('unlocking'));
+            await GoalsSync.unlock(pwd);
+            lastError = null;
+            refreshStatusBox();
+            refreshPill();
+            return true;
+        } catch (e) {
+            alert(st('unlockWrong'));
+            // loop and prompt again
+        }
+    }
+}
+
+async function syncUnlock() {
+    const ok = await ensureUnlocked();
+    if (ok) {
+        // After successful unlock, try a silent pull right away
+        await syncPullNow({ silent: true });
+    }
+}
+
+function syncLock() {
+    GoalsSync.lock();
+    lastSyncedAt = null;
+    lastError = null;
+    refreshStatusBox();
+    refreshPill();
+}
+
 async function syncPullNow(opts = {}) {
     const silent = !!opts.silent;
-    if (!GoalsSync.getConfig()) {
+    if (!GoalsSync.hasEncryptedToken()) {
         if (!silent) openSyncModal();
         return;
+    }
+    if (!GoalsSync.isUnlocked()) {
+        if (silent) return;          // never auto-prompt
+        const ok = await ensureUnlocked();
+        if (!ok) return;
     }
     setStatusBox('busy', st('pulling'));
     setPill('busy', st('pillBusy'));
@@ -677,13 +730,10 @@ async function syncPullNow(opts = {}) {
 }
 
 async function syncPushNow() {
-    if (!GoalsSync.getConfig()) { openSyncModal(); return; }
-    // Password gate: prompt every push to prevent accidental overwrites.
-    const entered = window.prompt(st('passwordPrompt'));
-    if (entered === null) return; // user cancelled
-    if (!GoalsSync.verifyPushPassword(entered)) {
-        alert(st('passwordWrong'));
-        return;
+    if (!GoalsSync.hasEncryptedToken()) { openSyncModal(); return; }
+    if (!GoalsSync.isUnlocked()) {
+        const ok = await ensureUnlocked();
+        if (!ok) return;
     }
     setStatusBox('busy', st('pushing'));
     setPill('busy', st('pillBusy'));
@@ -721,16 +771,19 @@ window.openSyncModal  = openSyncModal;
 window.closeSyncModal = closeSyncModal;
 window.syncPullNow    = syncPullNow;
 window.syncPushNow    = syncPushNow;
+window.syncUnlock     = syncUnlock;
+window.syncLock       = syncLock;
 
 // Esc to close modal
 document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && syncModal.classList.contains('open')) closeSyncModal();
 });
 
-/* ───── Auto-pull on load (if configured) ───── */
+/* ───── Auto-pull on load (only if already unlocked from sessionStorage) ───── */
 async function autoPullOnLoad() {
-    if (!GoalsSync.getConfig()) {
+    if (!GoalsSync.hasEncryptedToken() || !GoalsSync.isUnlocked()) {
         refreshPill();
+        refreshStatusBox();
         return;
     }
     try {

@@ -100,28 +100,42 @@
             </button>
         </div>
 
-        <p class="lede" data-en="Goal data is synced via a preconfigured private GitHub Gist. Pulls happen on page load; push manually after making changes (password required)."
-           data-zh="目标数据通过预配置的私有 GitHub Gist 同步。打开页面时自动拉取；修改后请手动推送（需要密码）。">
-            Goal data is synced via a preconfigured private GitHub Gist. Pulls happen on page load; push manually after making changes (password required).
+        <p class="lede" data-en="Goal data is synced via a private GitHub Gist. The token is encrypted in source — enter your unlock password to use sync. The unlock lasts until you close the browser tab."
+           data-zh="目标数据通过私有 GitHub Gist 同步。源代码中的令牌已加密，使用同步前请输入解锁密码。解锁状态在关闭标签页前一直有效。">
+            Goal data is synced via a private GitHub Gist. The token is encrypted in source — enter your unlock password to use sync. The unlock lasts until you close the browser tab.
         </p>
 
         <div class="modal-status" id="syncStatusBox">
             <span class="dot"></span>
-            <span id="syncStatusText" data-en="Idle" data-zh="待命">Idle</span>
+            <span id="syncStatusText" data-en="Locked" data-zh="已锁定">Locked</span>
         </div>
 
         <div class="modal-actions">
+            <button class="btn primary" id="syncUnlockBtn" onclick="syncUnlock()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2"/>
+                    <path d="M7 11V7a5 5 0 0 1 9.9-1"/>
+                </svg>
+                <span data-en="Unlock" data-zh="解锁">Unlock</span>
+            </button>
             <button class="btn" id="syncPullBtn" onclick="syncPullNow()">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M12 5v14"/><path d="M19 12l-7 7-7-7"/>
                 </svg>
                 <span data-en="Pull" data-zh="拉取">Pull</span>
             </button>
-            <button class="btn primary" id="syncPushBtn" onclick="syncPushNow()">
+            <button class="btn" id="syncPushBtn" onclick="syncPushNow()">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M12 19V5"/><path d="M5 12l7-7 7 7"/>
                 </svg>
                 <span data-en="Push" data-zh="推送">Push</span>
+            </button>
+            <button class="btn danger" id="syncLockBtn" onclick="syncLock()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2"/>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+                <span data-en="Lock" data-zh="锁定">Lock</span>
             </button>
         </div>
     </div>

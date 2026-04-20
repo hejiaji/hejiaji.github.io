@@ -1,78 +1,139 @@
 /* ─────────────────────────────────────────────────────────────
-   2026 Goals — GitHub Gist sync (private gist)
+   2026 Goals — GitHub Gist sync (encrypted token)
    ─────────────────────────────────────────────────────────────
 
-   ⚠️⚠️⚠️  SECURITY WARNING — READ THIS FIRST  ⚠️⚠️⚠️
-   ─────────────────────────────────────────────────────────────
-   This file contains an embedded GitHub Personal Access Token.
-   When this site is deployed to hejiaji.cn (a public site), the
-   token below WILL be readable by anyone who views the page
-   source. GitHub's secret scanner will likely also detect it.
+   The GitHub Personal Access Token is stored here as an
+   AES-GCM-encrypted blob. The decryption password is NEVER
+   committed and must be entered by the user at page load.
 
-   Risk assumptions for accepting this trade-off:
-     • The token is a FINE-GRAINED PAT scoped ONLY to
-       "Gists: Read & Write" — worst-case damage is limited
-       to your gists (read/edit/delete/create).
-     • The token has an EXPIRATION date set.
-     • You have a plan to ROTATE it if (when) it leaks.
-     • You accept that the "private" gist content is, by extension,
-       accessible to anyone who finds the token.
+   To create / rotate the token:
+     1. Open `goals/encrypt-token.html` locally in your browser
+     2. Paste a fresh fine-grained PAT (Gists R/W) + chosen password
+     3. Click Encrypt → copy the Base64 blob
+     4. Replace ENCRYPTED_TOKEN below
+     5. Commit + push (NOT detected by GitHub secret scanner)
 
-   To rotate after a leak:
-     1. Revoke at https://github.com/settings/personal-access-tokens
-     2. Generate a new fine-grained PAT (Gists R/W only, expiry set)
-     3. Replace EMBEDDED_TOKEN below
-     4. Commit + push
+   Crypto: PBKDF2-SHA256 (210,000 iters) → AES-GCM-256
+   Encoded blob layout: [16-byte salt][12-byte IV][ciphertext+tag], Base64.
 
-   Exposes window.GoalsSync with:
-     - getConfig()           → { token, gistId } | null
-     - pull()                → returns parsed JSON payload (or null if empty)
-     - push(payload)         → uploads payload (writes lastUpdated)
-     - onStatus(fn)          → status events
+   Exposes window.GoalsSync:
+     - hasEncryptedToken()  → true if ENCRYPTED_TOKEN looks real
+     - unlock(password)     → decrypt + cache token in memory; throws if wrong
+     - lock()               → wipe cached token from memory + sessionStorage
+     - isUnlocked()         → bool
+     - getGistId()          → string
+     - pull()               → returns parsed JSON payload (or null if empty)
+     - push(payload)        → uploads payload (writes lastUpdated)
+     - onStatus(fn)         → status events
 */
 
-// ⚠️ EDIT THESE THREE VALUES ─ paste your token + gist ID + push password. Then commit.
-// PUSH_PASSWORD acts as a friction guard so casual visitors can't accidentally
-// (or maliciously) overwrite your gist by clicking Push. It is NOT real security
-// — anyone reading source can see it. Use a memorable but non-trivial string.
-const EMBEDDED_TOKEN   = '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';
+// ⚠️ Replace with the Base64 output from goals/encrypt-token.html
+const ENCRYPTED_TOKEN  = 'y20f6pEYqejwkjL/sKa5mwK+d14nk9yt4wDiM4vXaPerlPJF9zlvGKcNXjmtvHTcoIltsR7zkNmzAub+DRYxeaZZuEu5ywIhExex8VW/KI/fDGAZT0HOdO+SFtt+R2w4iuJchYHgfVNVrUM6aube296As05+av0fa0ySaFumDh2oIn1YWp8bLd0=';
 const EMBEDDED_GIST_ID = '0dee662e56da5b3a0cfa560730426faa';
-const PUSH_PASSWORD    = 'hejiaji';
 
 const GIST_FILENAME = 'goals-2026.json';
-const GIST_DESC     = 'Jeremy He — 2026 goal tracker (private)';
 
+// ── Crypto constants (must match encrypt-token.html) ──
+const PBKDF2_ITER  = 210000;
+const SALT_BYTES   = 16;
+const IV_BYTES     = 12;
+const CACHE_KEY    = 'goals-2026-token-cache';   // sessionStorage
+
+// ── State ──
+let _token = null;   // Decrypted token, kept in memory only
 const listeners = new Set();
+
 function emit(status, detail) {
     listeners.forEach(fn => {
         try { fn({ status, detail, ts: Date.now() }); } catch {}
     });
 }
 
-function isPlaceholder(v) {
-    return !v || v === 'PASTE_YOUR_TOKEN_HERE' || v === 'PASTE_YOUR_GIST_ID_HERE' || v === 'PASTE_YOUR_PUSH_PASSWORD_HERE';
+function isPlaceholder() {
+    return !ENCRYPTED_TOKEN || ENCRYPTED_TOKEN === 'PASTE_ENCRYPTED_BASE64_HERE';
+}
+function hasEncryptedToken() { return !isPlaceholder(); }
+function getGistId() { return EMBEDDED_GIST_ID; }
+
+// ── Crypto helpers ──
+function b64dec(s) {
+    const bin = atob(s);
+    const u = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+    return u;
+}
+async function deriveKey(password, salt) {
+    const enc = new TextEncoder();
+    const baseKey = await crypto.subtle.importKey(
+        'raw', enc.encode(password), { name: 'PBKDF2' }, false, ['deriveKey']
+    );
+    return crypto.subtle.deriveKey(
+        { name: 'PBKDF2', salt, iterations: PBKDF2_ITER, hash: 'SHA-256' },
+        baseKey,
+        { name: 'AES-GCM', length: 256 },
+        false,
+        ['encrypt', 'decrypt']
+    );
 }
 
-/** Returns the embedded creds, or null if placeholders haven't been replaced. */
-function getConfig() {
-    if (isPlaceholder(EMBEDDED_TOKEN) || isPlaceholder(EMBEDDED_GIST_ID)) return null;
-    return { token: EMBEDDED_TOKEN, gistId: EMBEDDED_GIST_ID };
+/**
+ * Decrypt the embedded ENCRYPTED_TOKEN with `password`.
+ * Resolves to the plaintext token on success; rejects on wrong password
+ * or corrupted blob (AES-GCM provides authenticated decryption).
+ */
+async function decryptToken(password) {
+    if (!hasEncryptedToken()) throw new Error('No encrypted token configured');
+    const packed = b64dec(ENCRYPTED_TOKEN);
+    if (packed.length < SALT_BYTES + IV_BYTES + 16) {
+        throw new Error('Encrypted blob too short');
+    }
+    const salt = packed.slice(0, SALT_BYTES);
+    const iv   = packed.slice(SALT_BYTES, SALT_BYTES + IV_BYTES);
+    const ct   = packed.slice(SALT_BYTES + IV_BYTES);
+    const key  = await deriveKey(password, salt);
+    const pt   = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ct);
+    return new TextDecoder().decode(pt);
 }
 
-/** Compare an entered password against the embedded one (case-sensitive). */
-function verifyPushPassword(entered) {
-    if (isPlaceholder(PUSH_PASSWORD)) return false;
-    return entered === PUSH_PASSWORD;
+/** Unlock by entering the password. Caches token in memory + sessionStorage. */
+async function unlock(password) {
+    const token = await decryptToken(password); // throws if wrong
+    _token = token;
+    try { sessionStorage.setItem(CACHE_KEY, token); } catch {}
+    emit('unlocked');
+    return true;
 }
 
+/** Try to recover an already-unlocked session from sessionStorage. */
+function tryRestoreSession() {
+    if (_token) return true;
+    try {
+        const cached = sessionStorage.getItem(CACHE_KEY);
+        if (cached && typeof cached === 'string' && cached.length > 10) {
+            _token = cached;
+            return true;
+        }
+    } catch {}
+    return false;
+}
+
+/** Wipe the decrypted token from memory and sessionStorage. */
+function lock() {
+    _token = null;
+    try { sessionStorage.removeItem(CACHE_KEY); } catch {}
+    emit('locked');
+}
+
+function isUnlocked() { return !!_token; }
+
+// ── GitHub helpers ──
 async function gh(path, options = {}) {
-    const cfg = getConfig();
-    if (!cfg) throw new Error('Sync not configured (placeholders not replaced in sync.js)');
+    if (!_token) throw new Error('Locked — call unlock(password) first');
     const res = await fetch(`https://api.github.com${path}`, {
         ...options,
         headers: {
             'Accept': 'application/vnd.github+json',
-            'Authorization': `Bearer ${cfg.token}`,
+            'Authorization': `Bearer ${_token}`,
             'X-GitHub-Api-Version': '2022-11-28',
             ...(options.body ? { 'Content-Type': 'application/json' } : {}),
             ...(options.headers || {})
@@ -82,6 +143,8 @@ async function gh(path, options = {}) {
         const text = await res.text().catch(() => '');
         const err = new Error(`GitHub ${res.status}: ${text || res.statusText}`);
         err.status = res.status;
+        // 401 → token is invalid; lock so the user re-prompts
+        if (res.status === 401) lock();
         throw err;
     }
     return res.status === 204 ? null : res.json();
@@ -89,10 +152,9 @@ async function gh(path, options = {}) {
 
 /** Pull the current payload from the gist, or null if file missing. */
 async function pull() {
-    const cfg = getConfig();
-    if (!cfg) throw new Error('Sync not configured');
+    if (!_token) throw new Error('Locked');
     emit('pulling');
-    const gist = await gh(`/gists/${cfg.gistId}`);
+    const gist = await gh(`/gists/${EMBEDDED_GIST_ID}`);
     const file = gist.files && gist.files[GIST_FILENAME];
     if (!file) {
         emit('pulled', { empty: true });
@@ -101,7 +163,7 @@ async function pull() {
     let content = file.content;
     if (file.truncated && file.raw_url) {
         const raw = await fetch(file.raw_url, {
-            headers: { 'Authorization': `Bearer ${cfg.token}` }
+            headers: { 'Authorization': `Bearer ${_token}` }
         });
         content = await raw.text();
     }
@@ -113,8 +175,7 @@ async function pull() {
 
 /** Push the payload to the gist (sets lastUpdated automatically). */
 async function push(payload) {
-    const cfg = getConfig();
-    if (!cfg) throw new Error('Sync not configured');
+    if (!_token) throw new Error('Locked');
     emit('pushing');
     const body = {
         files: {
@@ -127,7 +188,7 @@ async function push(payload) {
             }
         }
     };
-    await gh(`/gists/${cfg.gistId}`, {
+    await gh(`/gists/${EMBEDDED_GIST_ID}`, {
         method: 'PATCH',
         body: JSON.stringify(body)
     });
@@ -136,7 +197,11 @@ async function push(payload) {
 
 function onStatus(fn) { listeners.add(fn); return () => listeners.delete(fn); }
 
+// Try to restore unlocked state on script load
+tryRestoreSession();
+
 window.GoalsSync = {
-    getConfig, verifyPushPassword, pull, push, onStatus,
+    hasEncryptedToken, unlock, lock, isUnlocked, getGistId,
+    pull, push, onStatus,
     GIST_FILENAME
 };
