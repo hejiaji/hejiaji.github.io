@@ -6,6 +6,9 @@ const STORAGE_KEY = 'goals-2026-v2';
 const BOOK_TARGET = 10;
 const WEIGHT_TARGET = 75; // kg
 const GYM_WEEKLY_TARGET = 3;
+// First ISO week (in 2026) for which the gym goal is trackable.
+// Weeks before this are marked N/A in the heatmap (the app didn't exist yet).
+const GYM_TRACKING_START_WEEK = 17; // 2026-04-20 (Mon) – 2026-04-26 (Sun)
 
 /* ───── Translations ───── */
 const T = {
@@ -323,9 +326,11 @@ function buildGymCard() {
         ? isoWeekOf(now)
         : (now.getFullYear() < 2026 ? 0 : TOTAL_WEEKS_2026);
 
-    // Past weeks (before currentWeek in 2026) are N/A — they count neither
-    // toward hits nor toward the denominator.
-    const isNA      = w => w >= 1 && w < currentWeek;
+    // N/A = weeks before tracking started (the app didn't exist yet).
+    // Everything from GYM_TRACKING_START_WEEK onward is trackable; weeks
+    // between the start and the current week are "past trackable" history
+    // you can still fill in retroactively.
+    const isNA      = w => w >= 1 && w < GYM_TRACKING_START_WEEK;
     const isCurrent = w => w === currentWeek;
     const isFuture  = w => w > currentWeek;
 
@@ -334,10 +339,9 @@ function buildGymCard() {
     ).length;
 
     // Streak: consecutive on-target weeks counting back from current week.
-    // N/A weeks break the streak (they aren't "hit").
+    // Stops at the tracking start (anything earlier doesn't break it).
     let streak = 0;
-    for (let w = currentWeek; w >= 1; w--) {
-        if (isNA(w)) break;
+    for (let w = currentWeek; w >= GYM_TRACKING_START_WEEK; w--) {
         if ((state.gym[w] || 0) >= GYM_WEEKLY_TARGET) streak++;
         else break;
     }
@@ -345,10 +349,11 @@ function buildGymCard() {
     const sumSessions = state.gym.reduce((s, n, i) =>
         (i >= 1 && i <= TOTAL_WEEKS_2026 && !isNA(i)) ? s + (n || 0) : s, 0);
 
-    // Tracked weeks = current + future (everything except N/A history).
-    const trackedWeeks = Math.max(0, TOTAL_WEEKS_2026 - Math.max(0, currentWeek - 1));
-    // Elapsed *trackable* weeks = just the current week (future weeks haven't happened yet).
-    const elapsedTrackable = currentWeek >= 1 && currentWeek <= TOTAL_WEEKS_2026 ? 1 : 0;
+    // Tracked weeks = everything from the tracking start to year-end.
+    const trackedWeeks = Math.max(0, TOTAL_WEEKS_2026 - GYM_TRACKING_START_WEEK + 1);
+    // Elapsed trackable weeks = how many of those have already occurred (incl. current).
+    const elapsedTrackable = Math.max(0,
+        Math.min(TOTAL_WEEKS_2026, currentWeek) - GYM_TRACKING_START_WEEK + 1);
     const hitRate = elapsedTrackable > 0
         ? Math.round((hitWeeks / elapsedTrackable) * 100)
         : 0;
@@ -449,10 +454,15 @@ function renderRing() {
     const currentWeek = now.getFullYear() === 2026
         ? isoWeekOf(now)
         : (now.getFullYear() < 2026 ? 0 : TOTAL_WEEKS_2026);
-    // Only the current week is "trackable elapsed" — past weeks are N/A and excluded.
-    const isCurrentInRange = currentWeek >= 1 && currentWeek <= TOTAL_WEEKS_2026;
-    const gymPct = isCurrentInRange
-        ? ((state.gym[currentWeek] || 0) >= GYM_WEEKLY_TARGET ? 100 : 0)
+    // Hit-rate over trackable weeks that have already elapsed
+    // (start week → current week, inclusive). Pre-tracking weeks are excluded.
+    const elapsedTrackable = Math.max(0,
+        Math.min(TOTAL_WEEKS_2026, currentWeek) - GYM_TRACKING_START_WEEK + 1);
+    const gymHits = state.gym.filter((c, i) =>
+        i >= GYM_TRACKING_START_WEEK && i <= currentWeek && c >= GYM_WEEKLY_TARGET
+    ).length;
+    const gymPct = elapsedTrackable > 0
+        ? Math.min(100, (gymHits / elapsedTrackable) * 100)
         : 0;
 
     const overall = Math.round((booksPct + weightPct + gymPct) / 3);
