@@ -883,4 +883,34 @@ footer {
     .book-grid { grid-template-columns: repeat(5, 1fr); }
     .gym-grid { grid-template-columns: repeat(13, 1fr); }
     .gym-cell { font-size: 0; }
+
+    /* Keep the top controls bar on a single row on mobile */
+    .controls {
+        padding: 12px 16px 0;
+        gap: 6px;
+        flex-wrap: nowrap;
+    }
+    .controls-left, .controls-right {
+        gap: 6px;
+        flex-wrap: nowrap;
+        min-width: 0;
+    }
+    .ctrl-btn, .sync-pill {
+        padding: 5px 8px;
+        gap: 4px;
+        font-size: 0.72rem;
+        white-space: nowrap;
+    }
+    .ctrl-btn svg, .sync-pill svg {
+        width: 13px; height: 13px;
+    }
+
+    /* Hide the sync pill text label on mobile (keep icon + status dot) */
+    .sync-pill #syncLabel {
+        display: none;
+    }
+    .sync-pill {
+        padding: 6px 8px;
+        gap: 5px;
+    }
 }
