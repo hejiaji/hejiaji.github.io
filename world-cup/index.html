@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="FIFA World Cup 2026 — Teams &amp; Big 4 League players">
+    <link rel="shortcut icon" href="/img/favicon.ico">
+    <title data-en="World Cup 2026 · Jeremy He" data-zh="2026 世界杯 · Jeremy He">2026 世界杯 · Jeremy He</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #f7f8fa;
+            --bg-elev: #ffffff;
+            --text: #1a1d24;
+            --text-dim: #5a6275;
+            --border: #e3e6ed;
+            --accent: #1e7e34;
+            --accent-2: #d4af37;
+            --pl: #38003c;
+            --laliga: #ff4b44;
+            --bundes: #d20515;
+            --seriea: #008fd7;
+            --shadow: 0 4px 18px rgba(0,0,0,0.06);
+        }
+        :root[data-theme="dark"] {
+            --bg: #0f1115;
+            --bg-elev: #1a1d24;
+            --text: #f0f2f7;
+            --text-dim: #9ba3b8;
+            --border: #2a2f3a;
+            --shadow: 0 4px 18px rgba(0,0,0,0.35);
+        }
+        html { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif; -webkit-font-smoothing: antialiased; }
+        body { background: var(--bg); color: var(--text); min-height: 100vh; line-height: 1.5; transition: background .25s, color .25s; }
+
+        /* Controls */
+        .controls { position: sticky; top: 0; z-index: 50; display: flex; justify-content: space-between; align-items: center; padding: 14px 22px; background: var(--bg); border-bottom: 1px solid var(--border); }
+        .ctrl-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border: 1px solid var(--border); background: var(--bg-elev); color: var(--text); border-radius: 999px; cursor: pointer; font-size: 13px; text-decoration: none; transition: background .15s, transform .15s; }
+        .ctrl-btn:hover { transform: translateY(-1px); }
+        .ctrl-btn svg { width: 14px; height: 14px; }
+        .controls-right { display: flex; gap: 8px; }
+
+        main { max-width: 1100px; margin: 0 auto; padding: 28px 22px 80px; }
+
+        .page-header { text-align: center; padding: 24px 0 8px; }
+        .trophy { font-size: 56px; line-height: 1; margin-bottom: 8px; }
+        .page-header h1 { font-size: 34px; letter-spacing: -0.5px; }
+        .page-header .tagline { color: var(--text-dim); margin-top: 6px; font-size: 15px; }
+
+        /* Legend */
+        .legend { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 22px 0 8px; }
+        .legend-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; color: #fff; }
+        .chip-pl { background: var(--pl); }
+        .chip-laliga { background: var(--laliga); }
+        .chip-bundes { background: var(--bundes); }
+        .chip-seriea { background: var(--seriea); }
+
+        /* Search + sort */
+        .toolbar { display: flex; gap: 10px; flex-wrap: wrap; margin: 18px 0 10px; align-items: center; }
+        .search { flex: 1; min-width: 220px; padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg-elev); color: var(--text); font-size: 14px; }
+        .sort-sel { padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg-elev); color: var(--text); font-size: 14px; cursor: pointer; }
+        .count-note { color: var(--text-dim); font-size: 13px; }
+
+        /* Team grid */
+        .team-grid { margin-top: 12px; }
+        .group-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+        .group-block { margin-bottom: 28px; }
+        .group-header { display: flex; align-items: baseline; justify-content: space-between; padding: 8px 4px 12px; border-bottom: 2px solid var(--accent); margin-bottom: 14px; }
+        .group-letter { font-size: 20px; font-weight: 800; letter-spacing: 0.5px; color: var(--accent); }
+        .group-meta { font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.6px; }
+        /* Form/stats in modal */
+        .form-section { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 14px; }
+        .form-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-dim); margin-bottom: 10px; }
+        .stat-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 12px; }
+        .stat-tile { text-align: center; padding: 8px 4px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px; }
+        .stat-num { font-size: 18px; font-weight: 800; line-height: 1; }
+        .stat-num.w { color: #28a745; }
+        .stat-num.d { color: #6c757d; }
+        .stat-num.l { color: #dc3545; }
+        .stat-lbl { display: block; margin-top: 4px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-dim); }
+        .form-row { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 10px; }
+        .form-pill { width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; color: #fff; }
+        .form-pill.W { background: #28a745; }
+        .form-pill.D { background: #6c757d; }
+        .form-pill.L { background: #dc3545; }
+        .match-list { list-style: none; display: grid; gap: 4px; }
+        .match-row { display: grid; grid-template-columns: 70px 22px 1fr 60px 22px 14px; gap: 8px; padding: 7px 10px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px; align-items: center; font-size: 13px; cursor: pointer; transition: border-color .15s, transform .12s; }
+        .match-row:hover { border-color: var(--accent); transform: translateX(2px); }
+        .match-chev { color: var(--text-dim); font-size: 11px; transition: transform .2s; }
+        .match-row.expanded .match-chev { transform: rotate(90deg); color: var(--accent); }
+        .match-detail { list-style: none; padding: 0; margin: 4px 0 8px; }
+        .match-detail-card { background: var(--bg); border: 1px solid var(--accent); border-radius: 10px; padding: 14px; animation: fadeIn .2s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+        .md-meta { display: flex; flex-wrap: wrap; gap: 10px; font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px dashed var(--border); }
+        .md-scoreboard { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: center; margin-bottom: 14px; }
+        .md-team { display: flex; align-items: center; gap: 10px; }
+        .md-home { justify-content: flex-end; text-align: right; }
+        .md-away { justify-content: flex-start; }
+        .md-flag { font-size: 28px; line-height: 1; }
+        .md-name { font-weight: 700; font-size: 14px; }
+        .md-score { text-align: center; min-width: 90px; }
+        .md-ft { font-size: 26px; font-weight: 800; letter-spacing: 1px; }
+        .md-ft span { color: var(--text-dim); font-weight: 400; }
+        .md-ht { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+        .md-goals { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding-top: 10px; border-top: 1px dashed var(--border); }
+        .goal-col { list-style: none; font-size: 12px; display: grid; gap: 4px; }
+        .goal-col li { display: flex; gap: 6px; align-items: baseline; }
+        .goal-home { justify-items: end; text-align: right; }
+        .goal-home li { flex-direction: row-reverse; }
+        .goal-min { font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; min-width: 30px; }
+        .goal-name { color: var(--text); }
+        .no-goals { color: var(--text-dim); font-style: italic; }
+        .md-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--border); }
+        .md-link { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: var(--bg-elev); color: var(--text); text-decoration: none; border: 1px solid var(--border); border-radius: 18px; font-size: 12px; font-weight: 600; transition: all .15s; }
+        .md-link:hover { background: var(--accent); color: #fff; border-color: var(--accent); transform: translateY(-1px); }
+        .match-row-inner { display: grid; grid-template-columns: 70px 22px 1fr 60px 22px; gap: 8px; padding: 7px 10px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px; align-items: center; font-size: 13px; }
+        .match-date { color: var(--text-dim); font-size: 11px; }
+        .match-ha { font-size: 9px; font-weight: 700; padding: 2px 4px; border-radius: 4px; text-align: center; background: var(--bg); color: var(--text-dim); }
+        .match-opp { font-weight: 600; }
+        .match-score { text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
+        .match-result { width: 18px; height: 18px; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; color: #fff; }
+        .match-result.W { background: #28a745; }
+        .match-result.D { background: #6c757d; }
+        .match-result.L { background: #dc3545; }
+        /* Rivals box in modal */
+        .rivals-box { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 14px; }
+        .rivals-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-dim); margin-bottom: 6px; }
+        .rivals-list { display: flex; flex-wrap: wrap; gap: 6px; }
+        .rival-chip { display: inline-flex; align-items: center; gap: 5px; padding: 5px 9px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 999px; font-size: 12px; cursor: pointer; transition: border-color .15s, transform .15s; }
+        .rival-chip:hover { border-color: var(--accent); transform: translateY(-1px); }
+        .team-card { background: var(--bg-elev); border: 1px solid var(--border); border-radius: 14px; padding: 16px; cursor: pointer; transition: transform .15s, box-shadow .15s, border-color .15s; box-shadow: var(--shadow); }
+        .team-card:hover { transform: translateY(-3px); border-color: var(--accent); box-shadow: 0 8px 26px rgba(0,0,0,0.10); }
+        .team-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .flag { font-size: 28px; line-height: 1; }
+        .team-name { font-weight: 700; font-size: 16px; flex: 1; }
+        .conf-tag { font-size: 10px; padding: 2px 7px; border-radius: 999px; background: var(--bg); color: var(--text-dim); border: 1px solid var(--border); text-transform: uppercase; letter-spacing: 0.5px; }
+        .big4-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+        .big4-num { font-size: 24px; font-weight: 800; color: var(--accent); }
+        .big4-lbl { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
+        .league-dots { display: flex; gap: 4px; margin-top: 10px; }
+        .dot { flex: 1; height: 6px; border-radius: 3px; opacity: 0.25; }
+        .dot.active { opacity: 1; }
+        .dot.pl { background: var(--pl); }
+        .dot.laliga { background: var(--laliga); }
+        .dot.bundes { background: var(--bundes); }
+        .dot.seriea { background: var(--seriea); }
+
+        /* Modal */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); backdrop-filter: blur(4px); display: none; align-items: flex-start; justify-content: center; padding: 30px 16px; z-index: 100; overflow-y: auto; }
+        .modal-overlay.open { display: flex; }
+        .modal { background: var(--bg-elev); border-radius: 16px; max-width: 720px; width: 100%; padding: 24px; border: 1px solid var(--border); box-shadow: 0 18px 60px rgba(0,0,0,0.35); }
+        .modal-head { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+        .modal-head .flag { font-size: 40px; }
+        .modal-head h2 { font-size: 24px; }
+        .modal-head .close { margin-left: auto; background: transparent; border: 0; color: var(--text-dim); font-size: 26px; cursor: pointer; line-height: 1; padding: 4px 8px; border-radius: 8px; }
+        .modal-head .close:hover { background: var(--bg); color: var(--text); }
+        .modal-sub { color: var(--text-dim); font-size: 13px; margin-bottom: 14px; }
+        .league-grouping { margin-top: 18px; }
+        .league-title { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; }
+        .league-pill { width: 10px; height: 10px; border-radius: 3px; }
+        .player-list { list-style: none; display: grid; grid-template-columns: 1fr; gap: 6px; }
+        .player-row { display: grid; grid-template-columns: 70px 1fr auto; gap: 10px; padding: 10px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; align-items: center; font-size: 14px; }
+        .pos-tag { font-size: 10px; font-weight: 700; padding: 3px 7px; border-radius: 6px; text-align: center; letter-spacing: 0.5px; }
+        .pos-GK { background: #ffc107; color: #000; }
+        .pos-DF { background: #28a745; color: #fff; }
+        .pos-MF { background: #007bff; color: #fff; }
+        .pos-FW { background: #dc3545; color: #fff; }
+        .player-name { font-weight: 600; }
+        .player-club { color: var(--text-dim); font-size: 13px; text-align: right; }
+        .empty-state { color: var(--text-dim); font-style: italic; padding: 12px; text-align: center; }
+
+        footer { text-align: center; padding: 22px; color: var(--text-dim); font-size: 13px; border-top: 1px solid var(--border); margin-top: 40px; }
+
+        @media (max-width: 520px) {
+            .page-header h1 { font-size: 26px; }
+            .trophy { font-size: 44px; }
+            .player-row { grid-template-columns: 56px 1fr; }
+            .player-club { grid-column: 1 / -1; text-align: left; font-size: 12px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="controls">
+    <a href="/" class="ctrl-btn" title="Home">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/></svg>
+        <span data-en="Home" data-zh="首页">首页</span>
+    </a>
+    <div class="controls-right">
+        <button class="ctrl-btn" id="langBtn" onclick="toggleLang()">
+            <span id="langLabel">EN</span>
+        </button>
+        <button class="ctrl-btn" id="themeBtn" onclick="toggleTheme()">
+            <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            <span id="themeLabel" data-en="Dark" data-zh="深色">深色</span>
+        </button>
+    </div>
+</div>
+
+<main>
+    <header class="page-header">
+        <div class="trophy">🏆</div>
+        <h1 data-en="FIFA World Cup 2026" data-zh="2026 国际足联世界杯">2026 国际足联世界杯</h1>
+        <p class="tagline" data-en="48 nations · 12 groups · USA · Canada · Mexico · How many of each squad play in Europe's Big 4?" data-zh="48 支球队 · 12 个小组 · 美国 · 加拿大 · 墨西哥 · 各队有多少球员效力于欧洲四大联赛？">48 支球队 · 12 个小组 · 美国 · 加拿大 · 墨西哥 · 各队有多少球员效力于欧洲四大联赛？</p>
+    </header>
+
+    <div class="legend">
+        <span class="legend-chip chip-pl" data-en="Premier League" data-zh="英超">英超</span>
+        <span class="legend-chip chip-laliga" data-en="La Liga" data-zh="西甲">西甲</span>
+        <span class="legend-chip chip-bundes" data-en="Bundesliga" data-zh="德甲">德甲</span>
+        <span class="legend-chip chip-seriea" data-en="Serie A" data-zh="意甲">意甲</span>
+    </div>
+
+    <div class="toolbar">
+        <input id="searchInput" class="search" type="text" data-en-placeholder='Search team, confederation, or group (e.g. "L")…' data-zh-placeholder='搜索球队、洲际联会或小组（例如 "L"）…' oninput="renderTeams()">
+        <select id="sortSel" class="sort-sel" onchange="renderTeams()">
+            <option value="group" data-en="Group view (A – L)" data-zh="按小组（A – L）">按小组（A – L）</option>
+            <option value="big4_desc" data-en="Most Big-4 players" data-zh="四大联赛球员（多到少）">四大联赛球员（多到少）</option>
+            <option value="big4_asc" data-en="Fewest Big-4 players" data-zh="四大联赛球员（少到多）">四大联赛球员（少到多）</option>
+            <option value="name" data-en="Name (A → Z)" data-zh="名称（A → Z）">名称（A → Z）</option>
+            <option value="conf" data-en="Confederation" data-zh="洲际联会">洲际联会</option>
+        </select>
+        <span class="count-note" id="countNote"></span>
+    </div>
+
+    <section class="team-grid" id="teamGrid"></section>
+</main>
+
+<!-- Detail modal -->
+<div class="modal-overlay" id="teamModal" onclick="if(event.target===this) closeModal()">
+    <div class="modal" role="dialog" aria-labelledby="modalTitle">
+        <div class="modal-head">
+            <span class="flag" id="modalFlag">🏳️</span>
+            <div>
+                <h2 id="modalTitle" data-en="Team" data-zh="球队">球队</h2>
+                <div class="modal-sub" id="modalSub" data-en="Confederation · Big 4 players" data-zh="洲际联会 · 四大联赛球员">洲际联会 · 四大联赛球员</div>
+            </div>
+            <button class="close" onclick="closeModal()" aria-label="Close">&times;</button>
+        </div>
+        <div id="modalBody"></div>
+    </div>
+</div>
+
+<footer>
+    &copy; <span id="yr"></span> Jeremy He &nbsp;·&nbsp;
+    <span data-en="Squad data from" data-zh="阵容数据来源：">阵容数据来源：</span>
+    <a href="https://fdp.fifa.org/assetspublic/ce281/pdf/SquadLists-English.pdf" target="_blank" rel="noopener" style="color:inherit" data-en="FIFA's official squad list" data-zh="FIFA 官方名单">FIFA 官方名单</a>
+    &nbsp;·&nbsp;
+    <span data-en="Match results from" data-zh="赛果数据来源：">赛果数据来源：</span>
+    <a href="https://github.com/openfootball/worldcup.json" target="_blank" rel="noopener" style="color:inherit">openfootball/worldcup.json</a>
+</footer>
+
+<script src="data.js"></script>
+<script src="translations.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
