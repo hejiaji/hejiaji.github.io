@@ -34,7 +34,7 @@
         body { background: var(--bg); color: var(--text); min-height: 100vh; line-height: 1.5; transition: background .25s, color .25s; }
 
         /* Controls */
-        .controls { position: sticky; top: 0; z-index: 50; display: flex; justify-content: space-between; align-items: center; padding: 14px 22px; background: var(--bg); border-bottom: 1px solid var(--border); }
+        .controls { position: sticky; top: 0; z-index: 50; display: flex; justify-content: flex-end; align-items: center; padding: 14px 22px; background: var(--bg); border-bottom: 1px solid var(--border); }
         .ctrl-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border: 1px solid var(--border); background: var(--bg-elev); color: var(--text); border-radius: 999px; cursor: pointer; font-size: 13px; text-decoration: none; transition: background .15s, transform .15s; }
         .ctrl-btn:hover { transform: translateY(-1px); }
         .ctrl-btn svg { width: 14px; height: 14px; }
@@ -171,21 +171,102 @@
 
         footer { text-align: center; padding: 22px; color: var(--text-dim); font-size: 13px; border-top: 1px solid var(--border); margin-top: 40px; }
 
+        /* Tabs */
+        .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin: 18px 0 10px; }
+        .tab-btn { background: transparent; border: 0; border-bottom: 3px solid transparent; padding: 10px 18px; font-size: 14px; font-weight: 600; color: var(--text-dim); cursor: pointer; transition: color .15s, border-color .15s; }
+        .tab-btn:hover { color: var(--text); }
+        .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        /* Knockout bracket */
+        .bracket-wrap { overflow-x: auto; padding: 14px 4px 20px; }
+        .bracket { position: relative; display: flex; gap: 48px; min-width: max-content; align-items: stretch; }
+        .bracket-lines { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; z-index: 0; }
+        .bracket-lines path { fill: none; stroke: var(--border); stroke-width: 1.5; }
+        .bracket-round { position: relative; z-index: 1; display: flex; flex-direction: column; justify-content: space-around; min-width: 240px; gap: 14px; transition: min-width .2s ease, gap .2s ease; }
+        .bracket-round.collapsed { min-width: 56px; gap: 0; }
+        .bracket-round.collapsed .ko-match,
+        .bracket-round.collapsed .ko-champion { display: none; }
+        .round-title { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-dim); text-align: center; padding: 4px 8px 8px; border-bottom: 2px solid var(--accent); margin-bottom: 8px; cursor: pointer; user-select: none; transition: color .15s; background: transparent; border-top: 0; border-left: 0; border-right: 0; width: 100%; font-family: inherit; }
+        .round-title:hover { color: var(--accent); }
+        .round-chev { font-size: 10px; line-height: 1; transition: transform .2s ease; }
+        .bracket-round.collapsed .round-chev { transform: rotate(-90deg); }
+        .bracket-round.collapsed .round-title { writing-mode: vertical-rl; transform: rotate(180deg); padding: 14px 6px; border-bottom: 0; border-right: 2px solid var(--accent); margin: 0; height: 100%; min-height: 240px; }
+        .bracket-round.collapsed .round-title .round-chev { writing-mode: horizontal-tb; transform: rotate(180deg); }
+        .round-count-pill { background: var(--border); color: var(--text); font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 999px; }
+        .bracket-round.collapsed .round-count-pill { writing-mode: horizontal-tb; transform: rotate(180deg); }
+        .ko-match { background: var(--bg); border: 1px solid var(--border); border-radius: 14px; padding: 10px 14px; box-shadow: var(--shadow); font-size: 14px; transition: border-color .15s, transform .15s, box-shadow .15s; cursor: pointer; }
+        .ko-match.is-played { background: var(--bg-elev); }
+        .ko-match:hover { border-color: var(--accent); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(0,0,0,0.12); }
+        .ko-match:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+        /* Match-detail modal */
+        .match-scoreboard { display: grid; grid-template-columns: 1fr auto 1fr; gap: 14px; align-items: center; padding: 18px 14px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 14px; margin-bottom: 14px; }
+        .match-team { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
+        .match-team .match-flag { font-size: 42px; line-height: 1; }
+        .match-team .match-name { font-weight: 700; font-size: 15px; }
+        .match-team .match-score { font-size: 32px; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--text-dim); }
+        .match-team.winner .match-name { color: var(--accent); }
+        .match-team.winner .match-score { color: var(--text); }
+        .match-vs { font-size: 18px; font-weight: 600; color: var(--text-dim); }
+        .match-penalty-note { text-align: center; font-size: 12px; color: var(--text-dim); margin: -8px 0 14px; font-style: italic; }
+        .match-meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 16px; }
+        .match-meta-item { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px; }
+        .match-meta-k { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.6px; font-weight: 600; }
+        .match-meta-v { font-size: 13px; color: var(--text); font-weight: 500; }
+        .match-section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-dim); margin: 10px 0 8px; padding-bottom: 4px; border-bottom: 1px solid var(--border); }
+        .match-goals-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+        .match-goal-col { background: var(--bg-elev); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+        .match-goal-team { font-weight: 700; font-size: 13px; margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px dashed var(--border); }
+        .match-goal-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+        .match-goal-list li { font-size: 13px; line-height: 1.4; }
+        .match-goal-list .goal-min { color: var(--text-dim); font-weight: 600; font-variant-numeric: tabular-nums; margin-right: 6px; }
+        .match-no-goals { color: var(--text-dim); font-size: 13px; text-align: center; padding: 4px 0; }
+        .match-not-played { text-align: center; padding: 16px; color: var(--text-dim); font-style: italic; background: var(--bg-elev); border: 1px dashed var(--border); border-radius: 10px; margin-bottom: 14px; }
+        .match-links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; }
+        .match-team-link { flex: 1 1 200px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 14px; background: var(--accent); color: white; border: 0; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background .15s, transform .15s; }
+        .match-team-link:hover { transform: translateY(-1px); filter: brightness(1.1); }
+
+        @media (max-width: 520px) {
+            .match-team .match-flag { font-size: 32px; }
+            .match-team .match-name { font-size: 13px; }
+            .match-team .match-score { font-size: 26px; }
+            .match-goals-grid { grid-template-columns: 1fr; }
+        }
+        .ko-card-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 12px; color: var(--text-dim); }
+        .ko-when { font-weight: 500; }
+        .ko-ft-pill { background: var(--border); color: var(--text); font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px; letter-spacing: 0.5px; }
+        .ko-side { display: grid; grid-template-columns: 24px 1fr auto 14px; gap: 10px; align-items: center; padding: 5px 0; }
+        .ko-flag { font-size: 20px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; }
+        .ko-shield { font-size: 18px; opacity: 0.55; filter: grayscale(1); }
+        .ko-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .ko-name.loser { color: var(--text-dim); opacity: 0.6; }
+        .ko-name.winner { color: var(--text); font-weight: 700; }
+        .ko-tbd-text { color: var(--text-dim); font-weight: 500; }
+        .ko-goal { text-align: right; font-weight: 800; font-variant-numeric: tabular-nums; min-width: 18px; color: var(--text); }
+        .ko-arrow { color: var(--text); font-size: 12px; line-height: 1; }
+        .ko-arrow-spacer { display: inline-block; width: 12px; }
+        .ko-final-col { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; min-width: 200px; }
+        .ko-final-col .round-title { width: 100%; }
+        .ko-champion { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 18px 24px; background: var(--bg-elev); border: 2px solid var(--accent-2); border-radius: 16px; box-shadow: var(--shadow); }
+        .ko-trophy { font-size: 36px; }
+        .ko-flag-big { font-size: 48px; line-height: 1; }
+        .ko-champion .ko-name { font-size: 17px; }
+
         @media (max-width: 520px) {
             .page-header h1 { font-size: 26px; }
             .trophy { font-size: 44px; }
             .player-row { grid-template-columns: 56px 1fr; }
             .player-club { grid-column: 1 / -1; text-align: left; font-size: 12px; }
+            .tab-btn { padding: 8px 12px; font-size: 13px; }
+            .bracket-round { min-width: 170px; }
         }
     </style>
 </head>
 <body>
 
 <div class="controls">
-    <a href="/" class="ctrl-btn" title="Home">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/></svg>
-        <span data-en="Home" data-zh="首页">首页</span>
-    </a>
     <div class="controls-right">
         <button class="ctrl-btn" id="langBtn" onclick="toggleLang()">
             <span id="langLabel">EN</span>
@@ -211,19 +292,30 @@
         <span class="legend-chip chip-seriea" data-en="Serie A" data-zh="意甲">意甲</span>
     </div>
 
-    <div class="toolbar">
-        <input id="searchInput" class="search" type="text" data-en-placeholder='Search team, confederation, or group (e.g. "L")…' data-zh-placeholder='搜索球队、洲际联会或小组（例如 "L"）…' oninput="renderTeams()">
-        <select id="sortSel" class="sort-sel" onchange="renderTeams()">
-            <option value="group" data-en="Group view (A – L)" data-zh="按小组（A – L）">按小组（A – L）</option>
-            <option value="big4_desc" data-en="Most Big-4 players" data-zh="四大联赛球员（多到少）">四大联赛球员（多到少）</option>
-            <option value="big4_asc" data-en="Fewest Big-4 players" data-zh="四大联赛球员（少到多）">四大联赛球员（少到多）</option>
-            <option value="name" data-en="Name (A → Z)" data-zh="名称（A → Z）">名称（A → Z）</option>
-            <option value="conf" data-en="Confederation" data-zh="洲际联会">洲际联会</option>
-        </select>
-        <span class="count-note" id="countNote"></span>
+    <div class="tabs" role="tablist">
+        <button class="tab-btn" id="tab-groups" role="tab" aria-selected="false" onclick="switchTab('groups')" data-en="Groups" data-zh="小组赛">小组赛</button>
+        <button class="tab-btn active" id="tab-knockout" role="tab" aria-selected="true" onclick="switchTab('knockout')" data-en="Knockout" data-zh="淘汰赛">淘汰赛</button>
     </div>
 
-    <section class="team-grid" id="teamGrid"></section>
+    <section class="tab-panel" id="panel-groups">
+        <div class="toolbar">
+            <input id="searchInput" class="search" type="text" data-en-placeholder='Search team, confederation, or group (e.g. "L")…' data-zh-placeholder='搜索球队、洲际联会或小组（例如 "L"）…' oninput="renderTeams()">
+            <select id="sortSel" class="sort-sel" onchange="renderTeams()">
+                <option value="group" data-en="Group view (A – L)" data-zh="按小组（A – L）">按小组（A – L）</option>
+                <option value="big4_desc" data-en="Most Big-4 players" data-zh="四大联赛球员（多到少）">四大联赛球员（多到少）</option>
+                <option value="big4_asc" data-en="Fewest Big-4 players" data-zh="四大联赛球员（少到多）">四大联赛球员（少到多）</option>
+                <option value="name" data-en="Name (A → Z)" data-zh="名称（A → Z）">名称（A → Z）</option>
+                <option value="conf" data-en="Confederation" data-zh="洲际联会">洲际联会</option>
+            </select>
+            <span class="count-note" id="countNote"></span>
+        </div>
+
+        <section class="team-grid" id="teamGrid"></section>
+    </section>
+
+    <section class="tab-panel active" id="panel-knockout">
+        <div class="bracket-wrap" id="bracketWrap"></div>
+    </section>
 </main>
 
 <!-- Detail modal -->

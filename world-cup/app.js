@@ -32,7 +32,32 @@ const I18N = {
         noPlayers: "No notable Big-4 reps listed for this team.",
         themeDark: "Dark", themeLight: "Light",
         months: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
-        monthsFull: ["January","February","March","April","May","June","July","August","September","October","November","December"]
+        monthsFull: ["January","February","March","April","May","June","July","August","September","October","November","December"],
+        koRounds: {
+            "Round of 32": "Round of 32",
+            "Round of 16": "Round of 16",
+            "Quarter-finals": "Quarter-finals",
+            "Semi-finals": "Semi-finals",
+            "Match for third place": "Third-place play-off",
+            "Final": "Final"
+        },
+        koTbd: "TBD",
+        koPenalties: "pen",
+        koAet: "AET",
+        koFt: "FT",
+        koEmpty: "No knockout matches yet. Once group stage concludes, the bracket will fill in here.",
+        koFetching: "⏳ Loading knockout matches from openfootball…",
+        koWinner: "Winner",
+        knockoutTab: "Knockout",
+        modalMatchTitle: (round) => `${round}`,
+        modalVenue: "Venue",
+        modalDate: "Date",
+        modalKickoff: "Kick-off",
+        modalGoals: "Goals",
+        modalNoGoals: "No goals recorded",
+        modalNotPlayed: "Match has not started yet",
+        modalPenWinner: (name) => `${name} won on penalties`,
+        modalViewTeam: (name) => `View ${name} squad →`
     },
     zh: {
         groupView: "按小组（A – L）",
@@ -61,7 +86,32 @@ const I18N = {
         noPlayers: "本队暂无四大联赛代表球员。",
         themeDark: "深色", themeLight: "浅色",
         months: ["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"],
-        monthsFull: ["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"]
+        monthsFull: ["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"],
+        koRounds: {
+            "Round of 32": "32 强",
+            "Round of 16": "16 强",
+            "Quarter-finals": "8 强",
+            "Semi-finals": "4 强",
+            "Match for third place": "三、四名决赛",
+            "Final": "决赛"
+        },
+        koTbd: "待定",
+        koPenalties: "点",
+        koAet: "加时",
+        koFt: "终",
+        koEmpty: "暂无淘汰赛比赛。小组赛结束后，对阵图将在此显示。",
+        koFetching: "⏳ 正在从 openfootball 加载淘汰赛比赛…",
+        koWinner: "冠军",
+        knockoutTab: "淘汰赛",
+        modalMatchTitle: (round) => `${round}`,
+        modalVenue: "场馆",
+        modalDate: "日期",
+        modalKickoff: "开球时间",
+        modalGoals: "进球",
+        modalNoGoals: "暂无进球记录",
+        modalNotPlayed: "比赛尚未开始",
+        modalPenWinner: (name) => `${name} 通过点球大战获胜`,
+        modalViewTeam: (name) => `查看 ${name} 阵容 →`
     }
 };
 let lang = localStorage.getItem("wc-lang") || "zh";
@@ -89,13 +139,31 @@ function toggleLang() {
     localStorage.setItem("wc-lang", lang);
     applyLang();
     renderTeams();
-    // Re-render any open modal
+    renderKnockout();
+    // Re-render any open modal (team or knockout match)
     const modal = document.getElementById("teamModal");
     if (modal && modal.classList.contains("open")) {
         const titleEl = document.getElementById("modalTitle");
+        const koNum = titleEl ? titleEl.getAttribute("data-ko-num") : null;
         const name = titleEl ? titleEl.getAttribute("data-team-name") : null;
-        if (name) openTeam(name);
+        if (koNum) openKoMatch(parseInt(koNum, 10));
+        else if (name) openTeam(name);
     }
+}
+
+/* Tabs */
+function switchTab(tab) {
+    const tabs = ["groups", "knockout"];
+    tabs.forEach(t => {
+        const btn = document.getElementById("tab-" + t);
+        const panel = document.getElementById("panel-" + t);
+        if (!btn || !panel) return;
+        const active = (t === tab);
+        btn.classList.toggle("active", active);
+        btn.setAttribute("aria-selected", active ? "true" : "false");
+        panel.classList.toggle("active", active);
+    });
+    if (tab === "knockout") renderKnockout();
 }
 
 /* ─────────────────────────────────────────────
@@ -212,6 +280,7 @@ function openTeam(name) {
     const titleEl = document.getElementById("modalTitle");
     titleEl.textContent = dispTeam(team.name);
     titleEl.setAttribute("data-team-name", team.name);
+    titleEl.removeAttribute("data-ko-num");
     const n = bigFourCount(team);
     const confLocal = L().confLabel[team.conf] || team.conf;
     document.getElementById("modalSub").textContent = L().modalSubGroup(team.group, confLocal, n);
@@ -458,6 +527,541 @@ function closeModal() {
     document.getElementById("teamModal").classList.remove("open");
     document.body.style.overflow = "";
 }
+
+/* ───── Knockout bracket ───── */
+const KO_ROUND_ORDER = [
+    "Round of 32",
+    "Round of 16",
+    "Quarter-finals",
+    "Semi-finals",
+    "Match for third place",
+    "Final"
+];
+
+// Normalize knockout-round labels. Group-stage matches use "Matchday N" — we
+// must ignore those, otherwise "Matchday 16" / "Matchday 32" would leak into
+// the Round of 16 / Round of 32 buckets.
+function normalizeRound(r) {
+    if (!r) return "";
+    const lower = String(r).trim().toLowerCase();
+    if (lower.startsWith("matchday")) return "";                // group stage
+    if (lower === "round of 32" || lower === "round of thirty-two") return "Round of 32";
+    if (lower === "round of 16" || lower === "round of sixteen") return "Round of 16";
+    if (lower === "quarter-final" || lower === "quarter-finals" || lower === "quarterfinal" || lower === "quarterfinals") return "Quarter-finals";
+    if (lower === "semi-final" || lower === "semi-finals" || lower === "semifinal" || lower === "semifinals") return "Semi-finals";
+    if (lower === "match for third place" || lower === "third-place play-off" || lower === "third place play-off" || lower === "third-place playoff" || lower === "3rd place play-off") return "Match for third place";
+    if (lower === "final") return "Final";
+    return "";
+}
+
+function teamFlag(name) {
+    const t = TEAMS.find(x => x.name === name);
+    return t ? t.flag : "";
+}
+
+// Given a single match, determine winner/loser team names (returns nulls if undecided)
+function matchOutcome(m) {
+    if (!m || !m.ft || m.ft.length !== 2 || !m.team1 || !m.team2) return { winner: null, loser: null };
+    const [g1, g2] = m.ft;
+    if (g1 > g2) return { winner: m.team1, loser: m.team2 };
+    if (g1 < g2) return { winner: m.team2, loser: m.team1 };
+    if (m.pen && m.pen.length === 2) {
+        return m.pen[0] > m.pen[1]
+            ? { winner: m.team1, loser: m.team2 }
+            : { winner: m.team2, loser: m.team1 };
+    }
+    return { winner: null, loser: null };
+}
+
+// Resolve openfootball placeholders like "W73" / "L101" → real team names
+function resolveTeam(slot, winners, losers) {
+    if (!slot) return null;
+    const s = String(slot).trim();
+    const m = s.match(/^([WL])(\d+)$/i);
+    if (!m) {
+        // Real team name — only return if it exists in TEAMS list
+        const c = canon(s);
+        return TEAMS.find(t => t.name === c) ? c : null;
+    }
+    const kind = m[1].toUpperCase();
+    const num = parseInt(m[2], 10);
+    return (kind === "W") ? (winners[num] || null) : (losers[num] || null);
+}
+
+/* Format the date/time label for a knockout fixture card
+ * "Today" / "Tomorrow" / "Sun, 5 July, 3:00 am" */
+function koDateTimeLabel(m) {
+    if (!m || !m.date) return "";
+    const [y, mo, d] = m.date.split("-").map(Number);
+    // Build a local Date assuming the date string is YYYY-MM-DD; we compare day-only.
+    const matchDay = new Date(y, mo - 1, d);
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const diffDays = Math.round((matchDay - today) / 86400000);
+
+    let dayLabel;
+    if (diffDays === 0)      dayLabel = lang === "zh" ? "今天" : "Today";
+    else if (diffDays === 1) dayLabel = lang === "zh" ? "明天" : "Tomorrow";
+    else if (diffDays === -1) dayLabel = lang === "zh" ? "昨天" : "Yesterday";
+    else {
+        if (lang === "zh") {
+            const wkZh = ["日","一","二","三","四","五","六"];
+            dayLabel = `${mo}月${d}日 周${wkZh[matchDay.getDay()]}`;
+        } else {
+            const wk = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+            const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+            dayLabel = `${wk[matchDay.getDay()]}, ${d} ${months[mo - 1]}`;
+        }
+    }
+
+    // Append time when in the future (or today), formatted as locale time when possible
+    if (diffDays >= 0 && m.time) {
+        const timeTxt = formatKoTime(m.time);
+        if (timeTxt) return `${dayLabel}, ${timeTxt}`;
+    }
+    return dayLabel;
+}
+
+function formatKoTime(timeStr) {
+    // openfootball times look like "12:00 UTC-7"; just strip the TZ for now
+    const m = timeStr.match(/^(\d{1,2}):(\d{2})/);
+    if (!m) return "";
+    let h = parseInt(m[1], 10), mm = m[2];
+    if (lang === "zh") return `${h}:${mm}`;
+    const ampm = h >= 12 ? "pm" : "am";
+    const h12 = h % 12 === 0 ? 12 : h % 12;
+    return `${h12}:${mm} ${ampm}`;
+}
+
+function koSideHtml(team, score, isWinner, isLoser, isPen) {
+    let nameHtml;
+    if (team) {
+        const cls = "ko-name" + (isLoser ? " loser" : "") + (isWinner ? " winner" : "");
+        nameHtml = `<span class="${cls}">${dispTeam(team)}</span>`;
+    } else {
+        nameHtml = `<span class="ko-name ko-tbd-text">${L().koTbd}</span>`;
+    }
+    const flag = team ? teamFlag(team) : `<span class="ko-shield">🛡</span>`;
+    let scoreHtml = "";
+    if (score !== null && score !== undefined && score !== "") {
+        if (isPen) scoreHtml = `${score.ft}<sup>(${score.pen})</sup>`;
+        else scoreHtml = `${score}`;
+    }
+    const arrow = isWinner ? `<span class="ko-arrow">◀</span>` : `<span class="ko-arrow-spacer"></span>`;
+    return `
+        <div class="ko-side">
+            <span class="ko-flag">${flag}</span>
+            ${nameHtml}
+            <span class="ko-goal">${scoreHtml}</span>
+            ${arrow}
+        </div>
+    `;
+}
+
+function koMatchCard(m, resolvedT1, resolvedT2) {
+    const t1 = resolvedT1;
+    const t2 = resolvedT2;
+    const hasResult = m && m.ft && m.ft.length === 2 && t1 && t2;
+    let s1 = "", s2 = "", w1 = false, w2 = false, isPen = false;
+    if (hasResult) {
+        const [g1, g2] = m.ft;
+        s1 = g1; s2 = g2;
+        if (g1 > g2)      { w1 = true; }
+        else if (g1 < g2) { w2 = true; }
+        else if (m.pen && m.pen.length === 2) {
+            isPen = true;
+            const [p1, p2] = m.pen;
+            s1 = { ft: g1, pen: p1 };
+            s2 = { ft: g2, pen: p2 };
+            if (p1 > p2)      w1 = true;
+            else if (p1 < p2) w2 = true;
+        }
+    }
+    const l1 = hasResult && !w1;
+    const l2 = hasResult && !w2;
+    const headerLabel = koDateTimeLabel(m);
+    const ftPill = hasResult ? `<span class="ko-ft-pill">${L().koFt}</span>` : "";
+    const numAttr = m && m.num ? `data-num="${m.num}"` : "";
+    const clickAttr = m && m.num ? `onclick="openKoMatch(${m.num})" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openKoMatch(${m.num});}"` : "";
+    return `
+        <article class="ko-match ${hasResult ? "is-played" : "is-upcoming"}" ${numAttr} ${clickAttr}>
+            <header class="ko-card-head">
+                <span class="ko-when">${headerLabel}</span>
+                ${ftPill}
+            </header>
+            ${koSideHtml(t1, s1, w1, l1, isPen)}
+            ${koSideHtml(t2, s2, w2, l2, isPen)}
+        </article>
+    `;
+}
+
+/* Open the match-detail modal for the given openfootball match number */
+function openKoMatch(num) {
+    const raw = (ALL_MATCHES || []).find(x => x.num === num);
+    if (!raw) return;
+
+    // Resolve winners map (so W##/L## placeholders show the actual team names)
+    const winners = {}, losers = {};
+    (ALL_MATCHES || []).forEach(m => {
+        if (!m.num) return;
+        const t1 = resolveTeam(m.team1, winners, losers);
+        const t2 = resolveTeam(m.team2, winners, losers);
+        const { winner, loser } = matchOutcome({ ...m, team1: t1, team2: t2 });
+        if (winner) winners[m.num] = winner;
+        if (loser)  losers[m.num]  = loser;
+    });
+    const t1 = resolveTeam(raw.team1, winners, losers);
+    const t2 = resolveTeam(raw.team2, winners, losers);
+
+    const hasResult = raw.ft && raw.ft.length === 2 && t1 && t2;
+    let w1 = false, w2 = false, isPen = false;
+    if (hasResult) {
+        const [g1, g2] = raw.ft;
+        if (g1 > g2) w1 = true;
+        else if (g1 < g2) w2 = true;
+        else if (raw.pen && raw.pen.length === 2) {
+            isPen = true;
+            if (raw.pen[0] > raw.pen[1]) w1 = true;
+            else if (raw.pen[0] < raw.pen[1]) w2 = true;
+        }
+    }
+
+    const roundDisp = L().koRounds[normalizeRound(raw.round)] || raw.round;
+
+    // --- Header
+    document.getElementById("modalFlag").textContent = "⚽";
+    const titleEl = document.getElementById("modalTitle");
+    titleEl.textContent = roundDisp;
+    titleEl.setAttribute("data-team-name", "");                  // not a team modal
+    titleEl.setAttribute("data-ko-num", String(num));            // remember for language toggle
+    const subEl = document.getElementById("modalSub");
+    const dateLine = raw.date ? koDateTimeLabel(raw) : "";
+    subEl.textContent = [dateLine, raw.ground].filter(Boolean).join(" · ");
+
+    // --- Scoreline / teams
+    const sideHtml = (team, isWinner, score, isPenScore) => {
+        const flag = team ? teamFlag(team) : "🛡";
+        const name = team ? dispTeam(team) : L().koTbd;
+        const cls = isWinner ? "match-team winner" : "match-team";
+        const scoreBlock = (score === undefined || score === null)
+            ? ""
+            : (isPenScore ? `<span class="match-score">${score.ft}<sup>(${score.pen})</sup></span>`
+                          : `<span class="match-score">${score}</span>`);
+        return `
+            <div class="${cls}">
+                <span class="match-flag">${flag}</span>
+                <span class="match-name">${name}</span>
+                ${scoreBlock}
+            </div>
+        `;
+    };
+
+    let s1, s2;
+    if (hasResult) {
+        if (isPen) {
+            s1 = { ft: raw.ft[0], pen: raw.pen[0] };
+            s2 = { ft: raw.ft[1], pen: raw.pen[1] };
+        } else {
+            s1 = raw.ft[0];
+            s2 = raw.ft[1];
+        }
+    }
+
+    const scoreboard = `
+        <div class="match-scoreboard">
+            ${sideHtml(t1, w1, s1, isPen)}
+            <span class="match-vs">${hasResult ? "" : "vs"}</span>
+            ${sideHtml(t2, w2, s2, isPen)}
+        </div>
+        ${isPen ? `<div class="match-penalty-note">${L().modalPenWinner(dispTeam(w1 ? t1 : t2))}</div>` : ""}
+    `;
+
+    // --- Meta grid
+    const metaItems = [];
+    if (raw.date)   metaItems.push({ k: L().modalDate, v: formatDateFull(raw.date) });
+    if (raw.time)   metaItems.push({ k: L().modalKickoff, v: raw.time });
+    if (raw.ground) metaItems.push({ k: L().modalVenue, v: raw.ground });
+    const metaHtml = metaItems.length ? `
+        <div class="match-meta-grid">
+            ${metaItems.map(it => `<div class="match-meta-item"><span class="match-meta-k">${it.k}</span><span class="match-meta-v">${it.v}</span></div>`).join("")}
+        </div>` : "";
+
+    // --- Goals
+    let goalsHtml = "";
+    if (hasResult) {
+        const formatGoals = (arr) => arr.length
+            ? `<ul class="match-goal-list">${arr.map(goalLine).join("")}</ul>`
+            : `<div class="match-no-goals">—</div>`;
+        goalsHtml = `
+            <div class="match-section-title">${L().modalGoals}</div>
+            <div class="match-goals-grid">
+                <div class="match-goal-col">
+                    <div class="match-goal-team">${teamFlag(t1)} ${dispTeam(t1)}</div>
+                    ${formatGoals(raw.goals1 || [])}
+                </div>
+                <div class="match-goal-col">
+                    <div class="match-goal-team">${teamFlag(t2)} ${dispTeam(t2)}</div>
+                    ${formatGoals(raw.goals2 || [])}
+                </div>
+            </div>
+        `;
+    } else {
+        goalsHtml = `<div class="match-not-played">${L().modalNotPlayed}</div>`;
+    }
+
+    // --- Team links
+    const linkBtn = (team) => team
+        ? `<button class="match-team-link" onclick="openTeam('${team.replace(/'/g, "\\'")}')">
+                ${teamFlag(team)} ${L().modalViewTeam(dispTeam(team))}
+            </button>`
+        : "";
+    const linksHtml = (t1 || t2) ? `
+        <div class="match-links">
+            ${linkBtn(t1)}
+            ${linkBtn(t2)}
+        </div>
+    ` : "";
+
+    document.getElementById("modalBody").innerHTML = `
+        ${scoreboard}
+        ${metaHtml}
+        ${goalsHtml}
+        ${linksHtml}
+    `;
+
+    document.getElementById("teamModal").classList.add("open");
+    document.body.style.overflow = "hidden";
+}
+
+/* Per-user collapsed-round state (persists in localStorage) */
+const KO_COLLAPSE_KEY = "wc-ko-collapsed";
+function readCollapsedState() {
+    try {
+        const raw = localStorage.getItem(KO_COLLAPSE_KEY);
+        return raw ? JSON.parse(raw) : {};
+    } catch { return {}; }
+}
+function writeCollapsedState(state) {
+    try { localStorage.setItem(KO_COLLAPSE_KEY, JSON.stringify(state)); } catch {}
+}
+function toggleRound(roundName) {
+    const state = readCollapsedState();
+    state[roundName] = !state[roundName];
+    writeCollapsedState(state);
+    // Re-render the bracket so the column collapses and lines redraw cleanly
+    renderKnockout();
+}
+
+/* Find which match-number(s) feed into a given match by parsing W##/L## placeholders */
+function feederNums(m) {
+    const out = [];
+    [m.team1, m.team2].forEach(slot => {
+        const s = String(slot || "").trim();
+        const mt = s.match(/^[WL](\d+)$/i);
+        if (mt) out.push(parseInt(mt[1], 10));
+    });
+    return out;
+}
+
+/* Draw connector lines between matched cards.
+ * Called after the bracket DOM is in place (with rAF so layout has settled). */
+function drawBracketLines() {
+    const wrap = document.getElementById("bracketWrap");
+    if (!wrap) return;
+    const bracket = wrap.querySelector(".bracket");
+    if (!bracket) return;
+
+    // Remove any previous SVG
+    const old = bracket.querySelector(".bracket-lines");
+    if (old) old.remove();
+
+    const cards = bracket.querySelectorAll(".ko-match[data-num]");
+    const bRect = bracket.getBoundingClientRect();
+
+    // Card-position lookup by match number (only for currently-rendered cards)
+    const pos = {};
+    cards.forEach(c => {
+        const num = parseInt(c.getAttribute("data-num"), 10);
+        const r = c.getBoundingClientRect();
+        pos[num] = {
+            left:   r.left   - bRect.left,
+            right:  r.right  - bRect.left,
+            top:    r.top    - bRect.top,
+            bottom: r.bottom - bRect.top,
+            midY:   (r.top + r.bottom) / 2 - bRect.top
+        };
+    });
+
+    // Collapsed-column bounds keyed by round name — used when a feeder card
+    // isn't rendered (its round is collapsed) so the line still terminates at
+    // the right edge of the collapsed strip.
+    const collapsedBounds = {};
+    bracket.querySelectorAll(".bracket-round.collapsed").forEach(col => {
+        const r = col.getBoundingClientRect();
+        collapsedBounds[col.getAttribute("data-round")] = {
+            left:  r.left  - bRect.left,
+            right: r.right - bRect.left
+        };
+    });
+
+    if (!cards.length && !Object.keys(collapsedBounds).length) return;
+
+    // Map match-number → its round (for collapsed feeder lookups)
+    const matchRound = {};
+    (ALL_MATCHES || []).forEach(m => {
+        if (m.num) matchRound[m.num] = normalizeRound(m.round);
+    });
+
+    const svgNS = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(svgNS, "svg");
+    svg.classList.add("bracket-lines");
+    svg.setAttribute("width", bracket.scrollWidth);
+    svg.setAttribute("height", bracket.scrollHeight);
+    svg.setAttribute("viewBox", `0 0 ${bracket.scrollWidth} ${bracket.scrollHeight}`);
+
+    (ALL_MATCHES || []).forEach(m => {
+        if (!m.num || !pos[m.num]) return;       // target card must be visible
+        const target = pos[m.num];
+        const feeders = feederNums(m);
+        feeders.forEach(fn => {
+            let x1, y1;
+            if (pos[fn]) {
+                x1 = pos[fn].right;
+                y1 = pos[fn].midY;
+            } else {
+                // Feeder card isn't rendered — its round is likely collapsed.
+                const fr = matchRound[fn];
+                const bounds = fr && collapsedBounds[fr];
+                if (!bounds) return;
+                x1 = bounds.right;
+                y1 = target.midY;                // straight horizontal stub
+            }
+            const x2 = target.left;
+            const y2 = target.midY;
+            const midX = (x1 + x2) / 2;
+            const d = `M ${x1} ${y1} H ${midX} V ${y2} H ${x2}`;
+            const path = document.createElementNS(svgNS, "path");
+            path.setAttribute("d", d);
+            svg.appendChild(path);
+        });
+    });
+
+    bracket.appendChild(svg);
+}
+
+function renderKnockout() {
+    const wrap = document.getElementById("bracketWrap");
+    if (!wrap) return;
+
+    if (!MATCHES_LOADED) {
+        wrap.innerHTML = `<div class="empty-state">${L().koFetching}</div>`;
+        return;
+    }
+    if (MATCHES_ERROR) {
+        wrap.innerHTML = `<div class="empty-state">${L().loadFail(MATCHES_ERROR)}</div>`;
+        return;
+    }
+
+    // Bucket all matches by normalized round
+    const byRound = {};
+    KO_ROUND_ORDER.forEach(r => byRound[r] = []);
+    (ALL_MATCHES || []).forEach(m => {
+        const r = normalizeRound(m.round);
+        if (r && byRound[r]) byRound[r].push(m);
+    });
+    KO_ROUND_ORDER.forEach(r => {
+        byRound[r].sort((a, b) => (a.date || "").localeCompare(b.date || "") || (a.time || "").localeCompare(b.time || ""));
+    });
+
+    const hasAny = KO_ROUND_ORDER.some(r => byRound[r].length > 0);
+    if (!hasAny) {
+        wrap.innerHTML = `<div class="empty-state">${L().koEmpty}</div>`;
+        return;
+    }
+
+    // Build winners[num] / losers[num] maps so we can resolve placeholders like W73
+    const winners = {}, losers = {};
+    (ALL_MATCHES || []).forEach(m => {
+        if (!m.num) return;
+        // First resolve the actual teams (placeholders may chain across rounds)
+        const t1 = resolveTeam(m.team1, winners, losers);
+        const t2 = resolveTeam(m.team2, winners, losers);
+        const resolved = { ...m, team1: t1, team2: t2 };
+        const { winner, loser } = matchOutcome(resolved);
+        if (winner) winners[m.num] = winner;
+        if (loser)  losers[m.num]  = loser;
+    });
+
+    // Determine champion (from Final)
+    let championName = null;
+    const finals = byRound["Final"];
+    if (finals && finals.length) {
+        const f = finals[finals.length - 1];
+        const ft1 = resolveTeam(f.team1, winners, losers);
+        const ft2 = resolveTeam(f.team2, winners, losers);
+        const { winner } = matchOutcome({ ...f, team1: ft1, team2: ft2 });
+        championName = winner;
+    }
+
+    const roundsToShow = KO_ROUND_ORDER.filter(r => byRound[r].length > 0);
+
+    // Helper: a round is "completed" when every match has a final result.
+    const isRoundDone = (r) => byRound[r].length > 0 &&
+        byRound[r].every(m => m.ft && m.ft.length === 2);
+
+    const collapsedState = readCollapsedState();
+    // Auto-collapse defaults for rounds the user hasn't explicitly toggled
+    roundsToShow.forEach(r => {
+        if (!(r in collapsedState) && isRoundDone(r)) collapsedState[r] = true;
+    });
+
+    const columns = roundsToShow.map(r => {
+        const matches = byRound[r];
+        const title = L().koRounds[r] || r;
+        const collapsed = !!collapsedState[r];
+        return `
+            <div class="bracket-round ${collapsed ? "collapsed" : ""}" data-round="${r}">
+                <button type="button" class="round-title" onclick="toggleRound('${r.replace(/'/g, "\\'")}')" aria-expanded="${!collapsed}">
+                    <span class="round-chev">${collapsed ? "▸" : "▾"}</span>
+                    <span>${title}</span>
+                    <span class="round-count-pill">${matches.length}</span>
+                </button>
+                ${matches.map(m => {
+                    const t1 = resolveTeam(m.team1, winners, losers);
+                    const t2 = resolveTeam(m.team2, winners, losers);
+                    return koMatchCard(m, t1, t2);
+                }).join("")}
+            </div>
+        `;
+    });
+
+    if (championName) {
+        columns.push(`
+            <div class="bracket-round ko-final-col" data-round="__champion">
+                <div class="round-title" style="cursor:default">
+                    <span>${L().koWinner}</span>
+                </div>
+                <article class="ko-champion">
+                    <div class="ko-trophy">🏆</div>
+                    <span class="ko-flag-big">${teamFlag(championName)}</span>
+                    <div class="ko-name winner">${dispTeam(championName)}</div>
+                </article>
+            </div>
+        `);
+    }
+
+    wrap.innerHTML = `<div class="bracket">${columns.join("")}</div>`;
+
+    // Wait for layout (and any font swap) before measuring positions
+    requestAnimationFrame(() => requestAnimationFrame(drawBracketLines));
+}
+
+// Redraw connector lines when the viewport changes so they stay aligned
+window.addEventListener("resize", () => {
+    const panel = document.getElementById("panel-knockout");
+    if (panel && panel.classList.contains("active")) {
+        requestAnimationFrame(drawBracketLines);
+    }
+});
 document.addEventListener("keydown", e => {
     if (e.key === "Escape") closeModal();
 });
@@ -484,6 +1088,7 @@ const NAME_MAP = {
 const canon = name => NAME_MAP[name] || name;
 
 let MATCHES = {};         // { teamName: [{ date, opponent, home, score, result, round, ground }, ...] }
+let ALL_MATCHES = [];     // raw match list (canonicalized team names) for bracket rendering
 let MATCHES_LOADED = false;
 let MATCHES_ERROR = null;
 
@@ -493,9 +1098,29 @@ async function loadMatches() {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         const buckets = {};
+        const allRaw = [];
         (data.matches || []).forEach(m => {
+            const t1raw = canon(m.team1), t2raw = canon(m.team2);
+            // Track every match (even unplayed) so we can render the bracket skeleton
+            allRaw.push({
+                num: m.num || null,
+                date: m.date || "",
+                time: m.time || "",
+                round: m.round || "",
+                group: m.group || "",
+                ground: m.ground || "",
+                team1: t1raw,
+                team2: t2raw,
+                ft: (m.score && Array.isArray(m.score.ft)) ? m.score.ft : null,
+                ht: (m.score && Array.isArray(m.score.ht)) ? m.score.ht : null,
+                pen: (m.score && Array.isArray(m.score.p)) ? m.score.p
+                    : (m.score && Array.isArray(m.score.pen)) ? m.score.pen
+                    : null,
+                goals1: m.goals1 || [],
+                goals2: m.goals2 || []
+            });
             if (!m.score || !Array.isArray(m.score.ft)) return;
-            const t1 = canon(m.team1), t2 = canon(m.team2);
+            const t1 = t1raw, t2 = t2raw;
             const [g1, g2] = m.score.ft;
             const [hg1, hg2] = (m.score.ht || [null, null]);
             const push = (team, opp, gf, ga, hgf, hga, home, ownGoals, oppGoals) => {
@@ -520,6 +1145,7 @@ async function loadMatches() {
             buckets[t] = buckets[t].slice(0, 10);
         });
         MATCHES = buckets;
+        ALL_MATCHES = allRaw;
         MATCHES_LOADED = true;
         // Re-render any open modal
         const open = document.getElementById("teamModal").classList.contains("open");
@@ -528,10 +1154,13 @@ async function loadMatches() {
             const name = titleEl.getAttribute("data-team-name") || titleEl.textContent;
             openTeam(name);
         }
+        // Re-render knockout if panel is open or simply prepare it
+        renderKnockout();
     } catch (err) {
         MATCHES_ERROR = err.message || String(err);
         MATCHES_LOADED = true;
         console.warn("Failed to load WC2026 match data:", err);
+        renderKnockout();
     }
 }
 
